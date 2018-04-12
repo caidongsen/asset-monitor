@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"strings"
 	"time"
-	"log"
 )
 
 var account string
@@ -15,38 +14,36 @@ var account string
 func monitor() {
 	for _, v := range Conf.Accounts {
 		account = v
-		log.Println(v)
 		Acc := `{"uid":` + `"` + account + `"` + "}"
 		for {
 			<-CRechargeOK
-			body := Post(Acc)
+			body, _ := Post(Acc)
 			Parsing(body)
-
 			time.Sleep(3 * time.Second)
 		}
 	}
-
 }
 
 /****************post请求*******************/
-func Post(str string) []byte {
+func Post(str string) ([]byte, error) {
 	resp, err := http.Post(Conf.Api.WalletInfo,
 		"application/json",
 		strings.NewReader(str))
 	if err != nil {
 		fmt.Println(err)
+		return nil, err
 	}
-
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		fmt.Println(err)
+		return nil, err
 	}
-	return body
+	return body, nil
 }
 
 /*******************解析*********************/
-func Parsing(body []byte) {
+func Parsing(body []byte) error {
 	conf := InitConfig()
 	h := make(map[string][]string)
 	str := make(map[string]float64)
@@ -54,21 +51,19 @@ func Parsing(body []byte) {
 	err := json.Unmarshal([]byte(body), &r)
 	if err != nil {
 		fmt.Printf("err was %v", err)
+		return err
 	}
 	data, ok := r.(map[string]interface{})
 	if ok {
 		for k, v := range data {
 			switch v1 := v.(type) {
-
 			case interface{}:
 				for m1, n1 := range v1.(map[string]interface{}) {
 					switch v2 := n1.(type) {
 					case interface{}:
-						//	fmt.Printf("%s币种:\n", m1)
 						for m2, n2 := range v2.(map[string]interface{}) {
 							switch v3 := n2.(type) {
 							case interface{}:
-								//	fmt.Printf("%s的数量为%.2f  ", m2, v3)
 								switch v4 := v3.(type) {
 								case float64:
 									switch m1 {
@@ -79,7 +74,6 @@ func Parsing(body []byte) {
 												h[account] = append(h[account], "CNY")
 											}
 										}
-
 									case "2":
 										if m2 == "active" {
 											str["BTC"] = v4
@@ -87,7 +81,6 @@ func Parsing(body []byte) {
 												h[account] = append(h[account], "BTC")
 											}
 										}
-
 									case "3":
 										if m2 == "active" {
 											str["BTY"] = v4
@@ -160,22 +153,19 @@ func Parsing(body []byte) {
 										}
 									}
 								}
-
 							}
 						}
 					}
 				}
-
 			default:
 				fmt.Println(k, "is another type not handle yet")
 			}
 		}
 	}
-
 	CData <- h
-
+	return nil
 }
-func ParsingWeb(body []byte) map[string]float64 {
+func ParsingWeb(body []byte) (map[string]float64, error) {
 	conf := InitConfig()
 	h := make(map[string][]string)
 	str := make(map[string]float64)
@@ -183,6 +173,7 @@ func ParsingWeb(body []byte) map[string]float64 {
 	err := json.Unmarshal([]byte(body), &r)
 	if err != nil {
 		fmt.Printf("err was %v", err)
+		return nil, err
 	}
 	data, ok := r.(map[string]interface{})
 	if ok {
@@ -208,7 +199,6 @@ func ParsingWeb(body []byte) map[string]float64 {
 												h[account] = append(h[account], "CNY")
 											}
 										}
-
 									case "2":
 										if m2 == "active" {
 											str["BTC"] = v4 / 1e+8
@@ -289,17 +279,15 @@ func ParsingWeb(body []byte) map[string]float64 {
 										}
 									}
 								}
-
 							}
 						}
 					}
 				}
-
 			default:
 				fmt.Println(k, "is another type not handle yet")
 			}
 		}
 	}
-	return str
+	return str, nil
 
 }
