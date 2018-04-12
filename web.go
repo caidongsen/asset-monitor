@@ -61,7 +61,7 @@ func show(w http.ResponseWriter, r *http.Request) { // /show页面
 		return
 	}
 	var informationasset = make(map[string]float64)
-	informationasset = ParsingWeb(body)
+	informationasset, _ = ParsingWeb(body)
 
 	RWMutex.Lock()
 	var informationrecord = PraseRecord(r.FormValue("account"))
