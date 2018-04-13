@@ -1,15 +1,15 @@
-accounts=["3f093fed33d7","23a3e456fc2f"]
+accounts=["9c885ce7664ed3c3675df8e49590c141665d94add5bf72a816a8d8a78bd8fbe5"]
 rpc="http://0.0.0.0:8888"
 
 [api]
-sms="发短信接口地址"
-mail="发邮件接口地址"
-walletInfo="账号资产信息接口地址"
-transfer="账号充值接口地址"
+sms="https://zc.33.cn/api2/sms/send"
+mail="https://zc.33.cn/api2/sms/mailsend"
+walletInfo="http://47.74.9.155:45656/walletinfo"
+transfer="http://47.74.9.155:57979/admintoinbank"
 
 [receipts]
-sms=["13858075274","15907332188"] #短信通知用户列表
-mail=["hxz@disanbo.com","sss@dds.com"] #邮件通知用户列表
+sms=["17816874376"] #短信通知用户列表
+mail=["249934074@qq.com"] #邮件通知用户列表
 
 [charges]
     [charges.CNY]
