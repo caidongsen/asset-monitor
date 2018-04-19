@@ -1,0 +1,326 @@
+syntax = "proto3";
+package gmgop;
+
+enum MessageType {
+    MsgError = 0;
+	MsgInit = 1;
+	MsgShutDown = 2;
+	MsgClose = 3;
+	MsgGopAssertCreate = 4;
+	MsgGopAssertDelete = 5;
+	MsgUserCreate = 6;
+	MsgBuContractCreate = 7;
+	MsgGopContractAgree = 8;
+	MsgGopContractReject = 9;
+	MsgGopDeliverAssert = 10;
+	MsgBuDeliverAssertConfirm = 11;
+	MsgGopFin = 12;
+	MsgChangePubkey = 13;
+	MsgBuRecallContract = 14;
+	MsgCount = 15;
+}
+
+message Request {
+	oneof value{
+		RequestUserCreate userCreate = 1; //创建Gop用户
+		RequestGopAssertCreate gopAssertCreate = 2; //Gop 创建一个资产
+		RequestGopAssertDelete gopAssertDelete = 3; //Gop 删除一个资产
+		RequestBuContractCreate buContractCreate = 4; //Bu 创建一个合约申请
+		RequestGopContractAgree gopContractAgree = 5; //Gop 同意合约申请
+		RequestGopContractReject gopContractReject = 6; //Gop 拒绝合约申请
+		RequestGopDeliverAssert gopDeliverAssert = 7; //Gop 交付一个资产
+		RequestBuDeliverAssertConfirm buDeliverAssertConfirm = 8; //Bu确认已经交付
+		RequestGopContractFin  gopFin = 9; //Gop 合约到期，回收资产
+		RequestChangePubkey changePubkey = 10; //用户公钥改变
+		RequestBuRecallContract buRecallContract = 11;
+		//RequestBuContractRenew buContractRenew = 11; //Bu 合约到期续约
+		//RequestGopContractRenewConfirm gopContractRenewConfirm = 12; //Gop 合约到期续约确认
+	}
+	string uid = 12;
+	int64 instructionId = 13;
+	bytes pubkey = 14;
+	bytes sign = 15;
+    MessageType actionId = 16;
+}
+
+enum AssertState {
+	StUndefined = 0;
+	StLeasehold = 1;
+	StLeased = 2;
+	StDelivered = 3;
+	StConfirmed = 4;
+	StExpired = 5;
+}
+
+enum Role {
+	RlUndefined = 0;
+	RlBu = 1;
+	RlGop = 2;
+}
+
+enum ContractState {
+	CSUndefined = 0;
+	CSCreated = 1;
+	CSAgreeed = 2;
+	CSRejected = 3;
+	CSRecalled = 4;
+	CSExpired = 5;
+}
+
+ //整个状态的变化是一个线性的变化：
+//assert status ： 创建(可租赁) -> 租赁申请（可租赁）-> 同意租赁(已租赁，等待交付)
+//-> 交付 (已交付，等待确认) -> 确认交付 ->(确认交付) -> 已到期 -> (回收->可租赁)(续租->确认交付)
+
+message RequestUserCreate {
+	string uid  = 1; //用户在系统中的唯一标识符
+	bytes  pubkey = 2; //用户和一个公钥绑定
+	bytes  info = 3;   //用户的其他信息
+	int32  role = 4;   //绑定用户的角色 
+}
+
+
+message RequestGopAssertCreate {
+	string assertId = 1;  //资产ID
+	int64  price = 2;     //资产价格
+	bytes  info = 3;      //资产的其他信息
+}
+
+message RequestGopAssertDelete {
+	string assertId = 1; //资产ID
+}
+
+message RequestBuContractCreate {
+	string contractId = 1; //合约ID
+	string assertId = 2; //资产ID
+	int64  price = 3;    //租赁的价格
+	int64  startT = 4;   //开始时间
+	int64  endT =  5;    //结束时间
+	bytes  info = 6;    //合约的其他信息
+}
+
+message RequestGopContractReject {
+	string contractId = 1; //合约ID
+}
+
+message RequestGopContractAgree {
+	string contractId = 1; //合约ID
+}
+
+message RequestGopDeliverAssert {
+	string contractId = 1; //合约ID
+}
+
+message RequestBuDeliverAssertConfirm {
+	string contractId = 1; //合约ID
+}
+
+message RequestGopContractFin {
+	string contractId = 1; //合约ID
+}
+
+message RequestChangePubkey {
+	bytes newPubkey = 1; //新公钥
+}
+
+message RequestBuRecallContract {
+	string contractId = 1; //合约ID
+}
+
+//message RequestBuContractRenew {
+	//string contractId = 1; //合约ID
+	//string newcontractId = 2; //新的合约ID
+	//int64  price = 4;    //租赁的价格，续约可以调整价格
+	//int64  startT = 5;   //开始时间
+	//int64 endT =  6;    //结束时间
+	//bytes  info = 7;    //合约的其他信息
+//}
+
+//message RequestGopContractRenewConfirm {
+	//string contractId = 2; //新的合约ID
+//}
+
+message Response {
+	oneof value{
+		ResponseUserCreate userCreate = 1;
+		ResponseAssertCreate assertCreate = 2;
+		ResponseAssertDelete assertDelete = 3;
+		ResponseContractCreate contractCreate = 4;
+		ResponseContractAgree contractAgree = 5;
+		ResponseContractReject contractReject = 6;
+		ResponseDeliverAssert deliverAssert = 7;
+		ResponseDeliverAssertConfirm deliverAssertConfirm = 8;
+		ResponseFin fin = 9;
+		ResponseChangePubkey changePubkey = 10;
+		ResponseRecallContract buRecallContract = 11;
+		ResponseOK ok = 12;
+		ResponseException exception = 13;
+	}
+}
+
+message ResponseException{
+	string error = 1;
+}
+
+message ResponseOK {
+	bool ok = 1;
+}
+
+message Receipt {
+    bool  isOk = 1;
+    bytes err = 2;
+}
+
+message ResponseRecallContract {
+   int64 instructionId = 1;
+   Event event = 2;
+}
+
+message ResponseFin {
+   int64 instructionId = 1;
+   Event event = 2;
+}
+
+message ResponseDeliverAssertConfirm {
+   int64 instructionId = 1;
+   Event event = 2;
+}
+
+message ResponseDeliverAssert {
+   int64 instructionId = 1;
+   Event event = 2;
+}
+
+message ResponseContractAgree {
+   int64 instructionId = 1;
+   Event event = 2;
+}
+
+message ResponseContractReject {
+   int64 instructionId = 1;
+   Event event = 2;
+}
+
+message ResponseContractCreate {
+   Event event = 1;
+   int64 instructionId = 2;
+}
+
+message ResponseAssertCreate {
+   Event event = 1;
+   int64 instructionId = 2;
+}
+
+message ResponseAssertDelete {
+   int64 instructionId = 1;
+   Event event = 2;
+}
+
+message ResponseUserCreate {
+   int64 instructionId = 1;
+   Event event = 2;
+}
+
+message ResponseChangePubkey {
+   int64 instructionId = 1;
+   Event event = 2;
+}
+
+message Assert {
+	int64  price = 1;     //资产价格
+	bytes  info = 2;      //资产的其他信息
+	AssertState state = 3;
+	bool isdel = 4;
+	string creatorUid = 5; //资产创建者uid
+	repeated string applicants = 6; //资产申请租赁contractid
+}
+
+message User {
+	bytes  pubkey = 1; //用户和一个公钥绑定
+	bytes  info = 2;   //用户的其他信息
+	int32  role = 3;   //绑定用户的角色 
+}
+
+message Contract {
+	string assertId = 1; //资产ID
+	int64  price = 2;    //租赁的价格
+	int64  startT = 3;   //开始时间
+	int64  endT =  4;    //结束时间
+	bytes  info = 5;    //合约的其他信息
+	ContractState state = 6;
+	string creatorUid = 7; //合约创建者uid
+}
+
+message Event {
+	oneof value{
+        EventUserCreate userCreate = 1;
+	    EventAssertCreate assertCreate = 2;
+        EventAssertDelete assertDelete = 3;
+        EventContractCreate contractCreate = 4;
+        EventContractAgree contractAgree = 5;
+        EventContractReject contractReject = 6;
+        EventDeliverAssert deliverAssert = 7;
+        EventDeliverAssertConfirm deliverAssertConfirm = 8;
+        EventFin fin = 9;
+        EventChangePubkey changePubkey = 10;
+		EventRecallContract recallContract = 11;
+	}
+}
+
+message EventUserCreate {
+	string uid = 1;
+	int32 role = 2;
+}
+
+message EventAssertCreate {
+	string assertId = 1;
+	AssertState state = 2;
+}
+
+message EventAssertDelete {
+	string assertId = 1;
+}
+
+message EventContractCreate {
+	string contractId = 1;
+	ContractState state = 2;
+}
+
+message EventContractAgree {
+	string contractId = 1;
+	ContractState cstate = 2;
+	AssertState astate = 3;
+	string assertId = 4;
+	repeated string rejected = 5; //被拒绝的contractid
+}
+
+message EventContractReject {
+	string contractId = 1;
+	ContractState state = 2;
+}
+
+message EventDeliverAssert {
+	string assertId = 1;
+	AssertState state = 2;
+}
+
+message EventDeliverAssertConfirm {
+	string assertId = 1;
+	AssertState state = 2;
+}
+
+message EventFin {
+	string assertId = 1;
+	AssertState astate = 2;
+	ContractState cstate = 3;
+	string contractId = 4;
+}
+
+message EventChangePubkey {
+	bytes newPubkey = 1;
+	string uid = 2;
+}
+
+message EventRecallContract {
+	string contractId = 1;
+	string uid = 2;
+}

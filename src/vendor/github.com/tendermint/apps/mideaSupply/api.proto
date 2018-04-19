@@ -1,0 +1,417 @@
+syntax = "proto3";
+package mideaSupply;
+
+enum MessageType {
+    MsgError = 0;
+	MsgInit = 1;
+	MsgShutDown = 2;
+	MsgClose = 3;
+	MsgInitPlatform = 4;//平台初始化
+	MsgRegisterSupplier = 5;//注册供应商
+	MsgWarehouseEntry = 6;//入库单登记
+	MsgOpenInvoice = 7;//发票登记 限制max1000条
+	MsgCheckInvoice = 8;//发票审核
+	MsgChangePubkey = 9;//供应商更新公钥
+	MsgRegisterSupplierList = 10;//批量注册供应商 限制max1000条
+	MsgResetPubkey = 11;//重置密码
+	MsgWarehouseEntryList = 12;//批量导入
+	MsgCount = 13;
+}
+
+message Request {
+	oneof value{
+		RequestInitPlatform initPlatform = 1; //平台初始化
+		RequestRegisterSupplier registerSupplier = 2;//注册供应商
+		RequestWarehouseEntry warehouseEntry = 3;//入库单登记
+		RequestOpenInvoice openInvoice = 4;//发票登记
+		RequestCheckInvoice checkInvoice = 5;//发票审核
+		RequestChangePubkey changePubkey = 6;//供应商更新公钥
+		RequestRegisterSupplierList registerSupplierList = 7;//批量注册供应商
+		RequestResetPubkey resetPubkey = 8;//平台重置密码
+		RequestWarehouseEntryList warehouseEntryList = 9;//批量导入
+	}
+	string uid = 10;
+	int64 instructionId = 11;
+	bytes pubkey = 12;
+	bytes sign = 13;
+    MessageType actionId = 14;
+}
+
+message RequestInitPlatform {
+	bytes platformKey = 1;//平台公钥
+	string info = 2;//备注
+}
+
+message RequestRegisterSupplier {
+	bytes userPubkey = 1;//
+	Supplier supplier = 2;//供应商信息
+}
+
+message RequestWarehouseEntry {
+	ReceiveHeader receiveHeader = 1;//头
+}
+
+message RequestWarehouseEntryList {
+	repeated ReceiveHeader receiveHeaderList = 1;//头
+}
+
+message	RequestOpenInvoice	{
+	InvoiceHeader invoiceHeader = 1;//发票头
+}
+
+message RequestCheckInvoice	{
+	int64 isInvoiceId = 1;//发票编号
+	bool isPass = 2;//是否通过
+}
+
+message RequestChangePubkey {
+	bytes newPubkey = 1;//新的公钥 uid 传 vendorId 
+}
+
+message RequestResetPubkey {
+	bytes newPubkey = 1;//新的公钥 uid 传 vendorId 
+	int64 vendorId = 2;//供应商id
+}
+
+message RequestRegisterSupplierList {
+	repeated Supplier supplierList = 1;//用户批量注册
+}
+
+message Response {
+	oneof value{
+		ResponseInitPlatform initPlatform = 1; //平台初始化
+		ResponseRegisterSupplier registerSupplier = 2;//注册供应商
+		ResponseWarehouseEntry warehouseEntry = 3;//入库单登记
+		ResponseOpenInvoice openInvoice = 4;//发票登记
+		ResponseCheckInvoice checkInvoice = 5;//发票审核
+		ResponseChangePubkey changePubkey = 6;//更新公钥
+		ResponseRegisterSupplierList registerSupplierList = 7;//
+		ResponseResetPubkey resetPubkey = 8;//
+		ResponseWarehouseEntryList warehouseEntryList = 9;//入库单登记
+		ResponseOK ok = 10;
+		ResponseException exception = 11;
+	}
+}
+
+message ResponseException{
+	string error = 1;
+}
+
+message ResponseOK {
+	bool ok = 1;
+}
+
+message Receipt {
+    bool  isOk = 1;
+    bytes err = 2;
+}
+
+message ResponseInitPlatform {
+   int64 instructionId = 1;
+   Event event = 2;
+}
+
+message ResponseRegisterSupplier {
+   int64 instructionId = 1;
+   Event event = 2;
+}
+
+message ResponseWarehouseEntry {
+   int64 instructionId = 1;
+   Event event = 2;
+}
+
+message ResponseWarehouseEntryList {
+   int64 instructionId = 1;
+   Event event = 2;
+}
+
+message ResponseOpenInvoice {
+   int64 instructionId = 1;
+   Event event = 2;
+}
+
+message ResponseCheckInvoice {
+   int64 instructionId = 1;
+   Event event = 2;
+}
+
+message ResponseChangePubkey {
+   int64 instructionId = 1;
+   Event event = 2;
+}
+
+message ResponseResetPubkey {
+   int64 instructionId = 1;
+   Event event = 2;
+}
+
+message ResponseRegisterSupplierList {
+	int64 instructionId = 1;
+   	Event event = 2;
+}
+
+message Event {
+	oneof value{
+		EventInitPlatform initPlatform = 1; //平台初始化
+		EventRegisterSupplier registerSupplier = 2;//注册供应商
+		EventWarehouseEntry warehouseEntry = 3;//入库单登记
+		EventOpenInvoice openInvoice = 4;//发票登记
+		EventCheckInvoice checkInvoice = 5;//发票审核
+		EventChangePubkey changePubkey = 6;//更新公钥
+		EventRegisterSupplierList registerSupplierList = 7;//批量注册供应商
+		EventResetPubkey resetPubkey = 8;//
+		EventWarehouseEntryList warehouseEntryList = 9;//入库单登记
+	}
+}
+
+message EventInitPlatform {
+	bytes platformKey = 1;
+}
+
+message EventRegisterSupplier {
+	bytes pubkey = 1;
+}
+
+message EventWarehouseEntry {
+	int64 headerId = 1;
+	repeated int64 line = 2;
+}
+
+message EventWarehouseEntryList {
+	repeated int64 ids = 2;
+}
+
+message EventOpenInvoice {
+	int64 invoiceHeader = 1;
+	repeated int64 line = 2;
+}
+
+message EventCheckInvoice {
+	int64 instructionId = 1;
+}
+
+message EventChangePubkey {
+	int64 instructionId = 1;
+}
+
+message EventResetPubkey {
+	int64 instructionId = 1;
+}
+
+message EventRegisterSupplierList {
+	int64 instructionId = 1;
+}
+
+//入库头
+message	ReceiveHeader {
+	int64 rec_header_id = 1; 
+	int64 shipmentHeaderId = 2;//发运头ID
+	string receiptNum = 3;//接受号
+	int64 receiveDate = 4;//接受日期
+	string receivePerson = 5;//接收人
+	string purchansePerson = 6;//采购员
+	int64 organizationId = 7;//库存组织ID
+	string organizationCode = 8;//库存组织编码
+	int64 vendorId = 9;//供应商ID
+	string vendorCode = 10;//供应商编码
+	string vendorName = 11;//供应商名称
+	int64 vendorSiteId = 12;//供应商地点ID
+	string vendorSiteCode = 13;//供应商地点编码
+	repeated ReceiveLine receiveLines = 14;//行明细
+	string attributeCategory = 15;//弹性域上下文
+	string attribute1 = 16;//
+	string attribute2 = 17;//
+	string attribute3 = 18;//
+	string attribute4 = 19;//
+	string attribute5 = 20;//
+	string attribute6 = 21;//
+	string attribute7 = 22;//
+	string attribute8 = 23;//
+	string attribute9 = 24;//
+	string attribute10 = 25;//
+	string attribute11 = 26;//
+	string attribute12 = 27;//
+	string attribute13 = 28;//
+	string attribute14 = 29;//
+	string attribute15 = 30;//
+}
+
+//入库行
+message	ReceiveLine	{
+	int64 rcvTranId = 1;//接收事务处理id
+	int64 shipmentHeaderId = 2;//发运头id
+	int64 itemId = 3;//物料id
+	string itemCode = 4;//物料编码
+	string itemDesc = 5;//物料描述
+	string primaryUnit = 6;//单位
+	int64 poHeaderId = 7;//采购头id
+	int64 poLineId = 8;//采购行id
+	string poNum = 9;//采购订单号
+	string lineNum = 10;//采购订单行号
+	string currencyCode = 11;//币种
+	int64 quantity = 12;//数量
+	int64 poUnitPrice = 13;//采购单价
+	int64 priceMatched = 14;//匹配单价
+	int64 quantityMatched = 15;//匹配数量
+	int64 amountMatched = 16;//匹配金额
+	string remark = 17;//备注
+	string rcvTranType = 18;//事务类型
+	int64 rcvTranDate = 19;//事务日期
+	int64 returnQuantity = 20;//退货数量
+	int64 topTranId = 21;//top事务ID
+	string attributeCategory = 22;//弹性域上下文
+	string attribute1 = 23;//
+	string attribute2 = 24;//
+	string attribute3 = 25;//
+	string attribute4 = 26;//
+	string attribute5 = 27;//
+	string attribute6 = 28;//
+	string attribute7 = 29;//
+	string attribute8 = 30;//
+	string attribute9 = 31;//
+	string attribute10 = 32;//
+	string attribute11 = 33;//
+	string attribute12 = 34;//
+	string attribute13 = 35;//
+	string attribute14 = 36;//
+	string attribute15 = 37;//
+	int64 currencyConversionRate = 38;//汇率
+	int64 currencyConversionDate = 39;//
+}
+
+//发票头
+message	InvoiceHeader {
+	int64 ispInvoiceId = 1;//发票ID
+	string ispInvoiceCode = 2;//发票编码
+	int64 orgId = 3;//OU ID
+	string orgName = 4;//OU 编码
+	string sourceCode = 5;//来源编号
+	int64 vendorId = 6;//供应商ID
+	string vendorCode = 7;//供应商编码
+	string vendorName = 8;//供应商名称
+	int64 vendorSiteId = 9;//供应商地点ID
+	string vendorSiteCode = 10;//供应商地点编码
+	string vendorSite = 11;//供应商地点
+	int64 tcmNoTaxAmount = 12;//不含税金额(减掉扣罚款及折扣)
+	int64 taxRate = 13;//税率
+	int64 taxAmount = 14;//税额
+	string currencyCode = 15;//币种
+	int64 currencyConversionRate = 16;//汇率
+	int64 currencyConversionDate = 17;//汇率日期
+	string comments = 18;//备注
+	string apInvoiceNumber = 19;//ap发票号
+	int64 glDate = 20;//ap总账日期
+	repeated InvoiceLine invoiceLine = 21;//发票行明细
+	InvoiceState invoiceState = 22;//发票状态
+	string createdBy = 23;//创建人
+	int64 createdDate = 24;//创建日期
+	string invoiceStatus = 25;//发票状态 
+	string attributeCategory = 26;//弹性域上下文
+	string attribute1 = 27;//
+	string attribute2 = 28;//
+	string attribute3 = 29;//
+	string attribute4 = 30;//
+	string attribute5 = 31;//
+	string attribute6 = 32;//
+	string attribute7 = 33;//
+	string attribute8 = 34;//
+	string attribute9 = 35;//
+	string attribute10 = 36;//
+	string attribute11 = 37;//
+	string attribute12 = 38;//
+	string attribute13 = 39;//
+	string attribute14 = 40;//
+	string attribute15 = 41;//
+}
+
+//发票行
+message	InvoiceLine {
+	int64 ispInvoiceId = 1;//发票ID
+	int64 ispInvoiceLineId = 2;//发票行ID
+	int64 ispTranId = 3;//接收事务处理id
+	int64 organizationId = 4;//库存组织ID
+	string organizationCode = 5;//库存组织编码
+	int64 lineNum = 6;//行号
+	int64 inventoryItemId = 7;//物料ID
+	string itemCode = 8;//物料编码
+	string itemDesc = 9;//物料描述
+	string itemUom = 10;//单位
+	int64 quantity = 11;//数量
+	int64 price = 12;//单价
+	string shareFlag = 13;//分摊标志
+	string lineType = 14;//行类型
+	int64 penaltyId = 15;//扣罚款ID
+	int64 overduePenaltyRate = 16;//超期开票扣罚比例
+	int64 lineAmount = 17;//金额
+	int64 poPrice = 18;//PO价格
+	string attributeCategory = 19;//弹性域上下文
+	string attribute1 = 20;//
+	string attribute2 = 21;//
+	string attribute3 = 22;//
+	string attribute4 = 23;//
+	string attribute5 = 24;//
+	string attribute6 = 25;//
+	string attribute7 = 26;//
+	string attribute8 = 27;//
+	string attribute9 = 28;//
+	string attribute10 = 29;//
+	string attribute11 = 30;//
+	string attribute12 = 31;//
+	string attribute13 = 32;//
+	string attribute14 = 33;//
+	string attribute15 = 34;//
+}
+
+message UnInvoiceLine {
+	string vendorCode = 1;//
+	string vendorName = 2;//
+	string vendorSiteCode = 3;//
+	string poNum = 4;//
+	string receiptNum = 5;//
+	int64 receiveDate = 6;//
+	string itemCode = 7;//
+	string itemDesc = 8;//
+	string primayUnit = 9;//
+	int64 quantityReceived = 10;//
+	int64 quantityMatched = 11;//
+	int64 poUnitPrice = 12;//
+	int64 rightAmount = 13;//
+	string currencyCode = 14;//本币
+	string orginalCode = 15;//原币
+	int64 organizationId = 16;//
+	int64 tranId = 17;//
+	int64 quantityUnmatched = 18;//
+	int64 currencyAmount = 19;//
+	int64 orginalAmount = 20;//
+}
+
+enum InvoiceState {
+	IS_UNCHECKED = 0;
+	IS_CHECKED = 1;
+	IS_REJECTED = 2;
+}
+
+message Platform {
+	bytes pubkey = 1; //平台公钥
+	string info = 2; //信息
+}
+
+message Supplier {
+	bytes userPubkey = 1;//供应商公钥
+	int64 vendorId = 2;//供应商ID
+	string vendorCode = 3;//供应商编码
+	string vendorName = 4;//供应商名称
+	repeated SupplierSite supplierSite = 5;//供应商地点列表
+	repeated ReceiveHeader rcvHeaders = 6;//供应商入库行
+	repeated InvoiceHeader invHeaders = 7;//供应商发票登记
+	repeated UnInvoiceLine uninvLines = 8;//未开票行
+	int64 unlinenum = 9;
+	int64 unlineamount = 10;
+	repeated int64 rcvlines = 11;
+}
+
+message SupplierSite {
+	int64 siteId = 1;//供应商地点ID
+	string siteCode = 2;//供应商地点编码
+}

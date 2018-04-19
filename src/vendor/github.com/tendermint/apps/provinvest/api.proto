@@ -1,0 +1,68 @@
+syntax = "proto3";
+package provinvest;
+
+enum MessageType {
+    MsgError = 0;
+	MsgInit = 1;
+	MsgShutDown = 2;
+	MsgClose = 3;
+	MsgOperationRecord = 4;
+	MsgCount = 5;
+}
+
+message Request {
+	oneof value{
+		RequestOperationRecord operationRecord = 1; //操作记录
+	}
+	string uid = 2;
+	int64 instructionId = 3;
+	bytes pubkey = 4;
+	bytes sign = 5;
+    MessageType actionId = 6;
+}
+
+message RequestOperationRecord {
+	string record  = 1; //操作内容
+	string recordVersion = 2;
+}
+
+message Response {
+	oneof value{
+		ResponseOperationRecord operationRecord = 1; //操作记录
+		ResponseOK ok = 2;
+		ResponseException exception = 3;
+	}
+}
+
+message ResponseException{
+	string error = 1;
+}
+
+message ResponseOK {
+	bool ok = 1;
+}
+
+message Receipt {
+    bool  isOk = 1;
+    bytes err = 2;
+}
+
+message ResponseOperationRecord {
+   int64 instructionId = 1;
+   Event event = 2;
+}
+
+message OperationRecord {
+	string record = 1;
+	string recordVersion = 2;
+}
+
+message Event {
+	oneof value{
+		EventOperationRecord operationRecord = 1; //操作记录
+	}
+}
+
+message EventOperationRecord {
+	int64 instructionId = 1;
+}

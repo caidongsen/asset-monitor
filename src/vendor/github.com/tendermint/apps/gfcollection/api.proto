@@ -1,0 +1,599 @@
+syntax = "proto3";
+package gfcollection;
+
+enum MessageType {
+    MsgError = 0;
+	MsgInit = 1;
+	MsgShutDown = 2;
+	MsgClose = 3;
+	MsgInitPlatform = 4;//平台初始化
+	MsgSetBank = 5;//注册银行 平台公钥签名
+	MsgSetCompany = 6;//注册委外机构 平台公钥签名
+	MsgAddCompany = 7;//添加委外机构 银行签名
+	MsgAddCaseConf = 8;//添加案件规则 银行签名
+	MsgEditCaseConf = 9;//修改案件规则 银行签名
+	MsgDelCaseConf = 10;//删除案件规则 银行签名
+	MsgImportCase = 11;//导入案件 银行签名
+	MsgImportCaseList = 12;//批量导入案件 max限定 1000 银行签名
+	MsgApplyCaseConf = 13;//应用案件规则 银行签名
+	MsgAddCompanyConf = 14;//添加委外公司收单规则 委外签名
+	MsgEditCompanyConf = 15;//修改委外公司收单规则 委外签名
+	MsgDelCompanyConf = 16;//删除委外公司收单规则 委外签名
+	MsgDelayCaseList = 17;//延长催收天数 委外签名
+	MsgCancelCaseList = 18;//退单 委外签名
+	MsgCollectCaseList = 19;//催收 委外签名
+	MsgFinishCaseList = 20;//催收完成 委外签名
+	MsgSwitchCase = 21;//转单 银行签名
+	MsgUpdateWeight = 22;//更新权重 银行签名
+	MsgDeliverCaseList = 23;//银行派案
+	MsgCount = 24;
+}
+
+message Request {
+	oneof value{
+		RequestInitPlatform initPlatform = 1;
+		RequestSetBank setBank = 2;
+		RequestSetCompany setCompany = 3;
+		RequestAddCompany addCompany  = 4;
+		RequestAddCaseConf addCaseConf = 5;
+		RequestEditCaseConf editCaseConf = 6;
+		RequestDelCaseConf delCaseConf = 7;
+		RequestImportCase importCase = 8;
+		RequestImportCaseList importCaseList = 9;
+		RequestApplyCaseConf applyCaseConf = 10;
+		RequestAddCompanyConf addCompanyConf = 11;
+		RequestEditCompanyConf editCompanyConf = 12;
+		RequestDelCompanyConf delCompanyConf = 13;
+		RequestDelayCaseList delayCaseList = 14;
+		RequestCancelCaseList cancelCaseList = 15;
+		RequestCollectCaseList collectCaseList = 16;
+		RequestFinishCaseList finishCaseList = 17;
+		RequestSwitchCase switchCase = 18;
+		RequestUpdateWeight updateWeight = 19;
+		RequestDeliverCaseList deliverCaseList = 20;
+	}
+	int64 op = 21;//操作时间
+    string uid = 22;//调用者编号 
+    bytes pubkey = 23;//调用者公钥
+	int64 instructionId = 24;
+	bytes sign = 25;
+    MessageType actionId = 26;
+}
+
+//平台初始化
+message RequestInitPlatform {
+	bytes platformKey = 1; //平台公钥
+	string info = 2; //备注
+}
+
+//注册银行
+message RequestSetBank {
+	bytes pubkey = 1;//银行公钥
+	string bankId = 2;//银行编号
+	string bankName = 3;//银行名称
+}
+
+//注册公司
+message RequestSetCompany {
+	bytes companyPubkey = 1;//委外公钥
+	string companyId = 2;//委外编号
+	string companyName = 3;//委外名称
+}
+
+//添加委外机构
+message RequestAddCompany {
+	bytes  companyPubkey = 1; //委外公钥
+	string companyArea = 2;//催收地区
+	string companyId = 3;//委外编号
+	string companyName = 4;//委外名称
+	int32 weight = 5;//初始权重 
+}
+
+//添加案件规则
+message RequestAddCaseConf {
+	string caseConfId = 1; //案件规则编号
+	int64 caseMinAmount = 2;//最小金额
+	int64 caseMaxAmount = 3;//最大金额
+	int32 overdueDays = 4;//逾期天数
+	int32 expireDays = 5;//催收有效时间
+	int32 rate = 6;//1% 传100
+}
+
+//修改案件规则
+message RequestEditCaseConf {
+	string caseConfId = 1; //案件规则编号
+	int64 caseMinAmount = 2;//最小金额
+	int64 caseMaxAmount = 3;//最大金额
+	int32 overdueDays = 4;//逾期天数
+	int32 expireDays = 5;//催收有效时间
+	int32 rate = 6;//1% 传100
+}
+
+//删除案件规则
+message RequestDelCaseConf {
+	string caseConfId = 1; //案件规则编号
+}
+
+//导入案件
+message RequestImportCase {
+	string caseId = 1;//案件编号
+	string caseOwner = 2;//客户姓名
+	string caseIdCard = 3;//客户证件号
+	string contract = 4;//联系方式
+	string bankCard = 5;//银行卡号
+	int64 debtAmount = 6;//欠款金额
+	int64 originalAmount = 7;//本金
+	int64 fees = 8;//滞纳金
+	int32 overdueDays = 9;//逾期天数
+	string caseArea = 10;//所属地区
+}
+
+//导入案件
+message RequestImportCaseList {
+	repeated Case caseList = 1;//案件列表
+}
+
+//应用规则
+message RequestApplyCaseConf {
+	repeated string caseIds = 1;//案件规则
+	bool isApply = 2;//是否应用委外机构规则
+}
+
+//添加委外机构收单规则
+message RequestAddCompanyConf {
+	string companyConfId = 1;//收单编号
+	string companyConfName = 2;//收单规则名称
+	int64 minAmount = 3;//最小金额
+	int64 maxAmount = 4;//最大金额
+	int32 overdueDays = 5;//逾期天数
+	int64 maxReceive = 6;//最大接受量
+	bool isAutoAdd  = 7;//是否自动补单
+	int32 rate = 8;// 1% 传100
+}
+
+//修改委外机构收单规则
+message RequestEditCompanyConf {
+	string companyConfId = 1;//收单编号
+	string companyConfName = 2;//收单规则名称
+	int64 minAmount = 3;//最小金额
+	int64 maxAmount = 4;//最大金额
+	int32 overdueDays = 5;//逾期天数
+	int64 maxReceive = 6;//最大接受量
+	bool isAutoAdd  = 7;//是否自动补单
+	int32 rate = 8;//
+}
+
+//删除委外机构收单规则
+message RequestDelCompanyConf {
+	string companyConfId = 1;//收单编号
+}
+
+//延长催收
+message RequestDelayCaseList {
+	repeated CaseDelay caseDelay = 1 ;//
+}
+
+//退单
+message RequestCancelCaseList {
+	repeated string caseId = 1;//
+}
+
+//催收
+message RequestCollectCaseList {
+	repeated string caseId = 1;//
+}
+
+//催收完成
+message RequestFinishCaseList {
+	repeated string caseId = 1;//
+}
+
+//转单
+message RequestSwitchCase {
+	string caseId = 1;
+	string companyId = 2;
+}
+
+message RequestUpdateWeight {
+	repeated CompanyWeight weightList = 1;
+}
+
+message RequestDeliverCaseList {
+	repeated string caseIds = 1;
+}
+
+message Response {
+	oneof value{
+		ResponseInitPlatform initPlatform = 1;
+		ResponseSetBank setBank = 2;
+		ResponseSetCompany setCompany = 3;	
+		ResponseAddCompany addCompany = 4;
+		ResponseAddCaseConf addCaseConf = 5;
+		ResponseEditCaseConf editCaseConf = 6;
+		ResponseDelCaseConf delCaseConf = 7;
+		ResponseImportCase importCase = 8;
+		ResponseImportCaseList importCaseList = 9;
+		ResponseApplyCaseConf applyCaseConf = 10;
+		ResponseAddCompanyConf addCompanyConf = 11;
+		ResponseEditCompanyConf editCompanyConf = 12;
+		ResponseDelCompanyConf delCompanyConf = 13;
+		ResponseDelayCaseList delayCaseList = 14;
+		ResponseCancelCaseList cancelCaseList = 15;
+		ResponseCollectCaseList collectCaseList = 16;
+		ResponseFinishCaseList finishCaseList = 17;
+		ResponseSwitchCase switchCase = 18;
+		ResponseUpdateWeight updateWeight = 19;
+		ResponseDeliverCaseList deliverCaseList = 20;
+		ResponseOK ok = 21;
+		ResponseException exception = 22;
+	}
+}
+
+message ResponseException{
+	string error = 1;
+}
+
+message ResponseOK {
+	bool ok = 1;
+}
+
+message Receipt {
+    bool  isOk = 1;
+    bytes err = 2;
+}
+
+message ResponseInitPlatform {
+   int64 instructionId = 1;
+   Event event = 2;
+}
+
+message ResponseSetBank {
+   int64 instructionId = 1;
+   Event event = 2;
+}
+
+message ResponseSetCompany {
+   int64 instructionId = 1;
+   Event event = 2;
+}
+
+message ResponseAddCompany {
+	int64 instructionId = 1;
+	Event event = 2;
+}
+
+message ResponseAddCaseConf {
+   int64 instructionId = 1;
+   Event event = 2;
+}
+
+message ResponseEditCaseConf {
+   int64 instructionId = 1;
+   Event event = 2;
+}
+
+message ResponseDelCaseConf {
+   int64 instructionId = 1;
+   Event event = 2;
+}
+
+message ResponseImportCase {
+   int64 instructionId = 1;
+   Event event = 2;
+}
+
+message ResponseImportCaseList {
+   int64 instructionId = 1;
+   Event event = 2;
+}
+
+message ResponseApplyCaseConf {
+   int64 instructionId = 1;
+   Event event = 2;
+}
+
+message ResponseAddCompanyConf {
+   int64 instructionId = 1;
+   Event event = 2;
+}
+
+message ResponseEditCompanyConf {
+   int64 instructionId = 1;
+   Event event = 2;
+}
+
+message ResponseDelCompanyConf {
+   int64 instructionId = 1;
+   Event event = 2;
+}
+
+message ResponseDelayCaseList {
+	int64 instructionId = 1;
+    Event event = 2;
+}
+
+message ResponseCancelCaseList {
+	int64 instructionId = 1;
+    Event event = 2;
+}
+
+message ResponseCollectCaseList {
+	int64 instructionId = 1;
+    Event event = 2;
+}
+
+message ResponseFinishCaseList {
+	int64 instructionId = 1;
+    Event event = 2;
+}
+
+message ResponseSwitchCase {
+	int64 instructionId = 1;
+    Event event = 2;
+}
+
+message ResponseUpdateWeight {
+	int64 instructionId = 1;
+    Event event = 2;
+}
+
+message ResponseDeliverCaseList {
+	int64 instructionId = 1;
+    Event event = 2;
+}
+
+
+//银行
+message Bank {
+	bytes  pubkey = 1; //银行公钥
+	string bankId = 2; //银行编号
+	string bankName = 3; //银行名称
+	repeated Case waitingList = 4; // 待催收案件列表
+	repeated Case collectingList = 5; // 催收中的案件列表
+	repeated Case delayedList = 6; // 已延期中的案件列表
+	repeated CaseConf caseConfList = 7;//案件包
+	bool isApplyCompanyConf = 8 ;//是否使用委外机构规则
+	bool isCompanyOk = 9;//
+	bool isBankConfOk = 10;//
+}
+
+message Banks {
+	repeated string banks = 1;
+}
+
+message DeliverResult {
+	repeated DeliverCompany deliverList = 1;
+}
+
+message CompanyWeight {
+	string companyId = 1;
+	string area = 2;
+	int32 weight = 3;
+}
+
+message SwitchCase {
+	string caseId = 1;
+	string companyId = 2;
+}
+
+message DeliverCompany {
+	string companyId = 1;
+	string area = 2;
+	int32 weight = 3;
+	repeated int32 indexs = 4;
+	repeated string caseIds = 5;
+}
+
+//委外机构
+message Company {
+	bytes  companyPubkey = 1; //委外公钥
+	string companyArea = 2;//催收地区
+	string companyId = 3;//委外编号
+	string companyName = 4;//委外名称
+	int32 weight = 5;//权重  1% 传 100 
+	repeated Case deliverList = 6;//已分发的案件列表
+	repeated Case collectingList = 7; // 催收中的案件列表
+	repeated Case delayedList = 8; // 已延期中的案件列表
+	CompanyConf companyConf = 9;//收单规则
+	repeated Case unDeliverList = 10;//合约自动派发的案件列表
+}
+
+//收单规则
+message CompanyConf {
+	string companyConfId = 1;//收单编号
+	string companyConfName = 2;//收单规则名称
+	int64 minAmount = 3;//最小金额
+	int64 maxAmount = 4;//最大金额
+	int32 overdueDays = 5;//逾期天数
+	int64 maxReceive = 6;//最大接受量
+	bool isAutoAdd  = 7;//是否自动补单
+	int32 rate = 8;
+}
+
+//案件规则
+message CaseConf {
+	string bankId = 1;//银行编号
+	string caseConfId = 2; //案件规则编号
+	int64 caseMinAmount = 3;//最小金额
+	int64 caseMaxAmount = 4;//最大金额
+	int32 overdueDays = 5;//逾期天数
+	int32 expireDays = 6;//催收有效时间
+	bool isApply = 7;//是否应用
+	int32 rate = 8;//
+}
+
+//案件
+message Case {
+	string caseId = 1;//案件编号
+	string caseOwner = 2;//客户姓名
+	string caseIdCard = 3;//客户证件号
+	string contract = 4;//联系方式
+	string bankCard = 5;//银行卡号
+	int64 debtAmount = 6;//欠款金额
+	int64 originalAmount = 7;//本金
+	int64 fees = 8;//滞纳金
+	int32 overdueDays = 9;//逾期天数
+	int32 delayDays = 10;//延期天数
+	string caseArea = 11;//所属地区
+	CaseState caseState = 12;//案件状态
+	string bankId = 13;//所属银行编号
+	string companyId = 14;//委外机构
+}
+
+//地区列表
+message	AreaList {
+	repeated AreaCompany areaCompany = 1;
+}
+
+//
+message AreaCompany {
+	string area = 1;
+	repeated WeightCompany companys = 2;
+}
+
+message WeightCompany {
+	string companyId = 1;
+	int32 weight =2 ;
+	int32 firstWeight = 3;
+}
+
+//地区案件池
+message	AreaCasePool {
+	string bankId = 1;//银行
+	string area = 2;//地区编号
+	repeated Case caseList = 3;//案件列表
+	repeated Case waitingList = 4; // 待催收案件列表
+	repeated Case deliverList = 5;// 分发案件列表
+	repeated Case collectingList = 6; // 催收中的案件列表
+	repeated Case delayedList = 7; // 已延期中的案件列表
+}
+
+message Platform {
+	bytes pubkey = 1; //平台公钥
+	string info = 2; //信息
+}
+
+enum CaseState {
+	CS_UNK = 0;//
+	CS_UNDELIVER = 1;//未分发
+	CS_WAITED = 2;//待催收
+	CS_DELIVER = 3;//待派
+	CS_COLLECTIING = 4;//催收中
+	CS_DELAYED = 5;//已延期
+	CS_OVERDUE = 6;//已逾期
+	CS_DONE = 7;//已完成
+}
+
+message CaseDelay {
+	string caseId = 1;//
+	int32 days = 2;//延期天数
+}
+
+message Event {
+	oneof value{
+		EventInitPlatform initPlatform = 1;
+		EventSetBank setBank = 2;
+		EventSetCompany setCompany = 3;	
+		EventAddCompany addCompany = 4;
+		EventAddCaseConf addCaseConf = 5;
+		EventEditCaseConf editCaseConf = 6;
+		EventDelCaseConf delCaseConf = 7;
+		EventImportCase importCase = 8;
+		EventImportCaseList importCaseList = 9;
+		EventApplyCaseConf applyCaseConf = 10;
+		EventAddCompanyConf addCompanyConf = 11;
+		EventEditCompanyConf editCompanyConf = 12;
+		EventDelCompanyConf delCompanyConf = 13;
+		EventDelayCaseList delayCaseList = 14;
+		EventCancelCaseList cancelCaseList = 15;
+		EventCollectCaseList collectCaseList = 16;
+		EventFinishCaseList finishCaseList = 17;	
+		EventSwitchCase	switchCase = 18;	
+		EventUpdateWeight updateWeight = 19;
+		EventDeliverCaseList deliverCaseList = 20;
+	}
+}
+
+message EventInitPlatform {
+	bytes platformKey = 1;
+}
+
+message EventSetBank {
+	string bankId = 1;
+}
+
+message EventSetCompany {
+	string companyId = 1;
+}
+
+message EventAddCompany {
+	string companyId = 1;
+}
+
+message EventAddCaseConf {
+	string caseConfId = 1;
+}
+
+message EventEditCaseConf {
+	string caseConfId = 1;
+}
+
+message EventDelCaseConf {
+	string caseConfId = 1;
+}
+
+message EventImportCase {
+	string caseId = 1;
+	DeliverResult result = 2;
+}
+
+message EventImportCaseList {
+	repeated Case caseList = 1;
+	DeliverResult result = 2;
+}
+
+message EventApplyCaseConf {
+	repeated string caseConfIds = 1;
+}
+
+message EventAddCompanyConf {
+	string companyConfId = 1;
+}
+
+message EventEditCompanyConf {
+	string companyConfId = 1;
+}
+
+message EventDelCompanyConf {
+	string companyConfId = 1;
+}
+
+message EventDelayCaseList {
+	repeated CaseDelay caseList = 1;
+}
+
+message EventCancelCaseList {
+	repeated string caseList = 1;
+}
+
+message EventCollectCaseList {
+	repeated string caseList = 1;
+}
+
+message EventFinishCaseList {
+	repeated string caseList = 1;
+	DeliverResult result = 2;
+}
+
+message EventSwitchCase {
+	string caseId = 1;
+	string companyId = 2;
+}
+
+message EventUpdateWeight {
+	
+}
+
+message EventDeliverCaseList {
+	repeated string caseIds = 1;
+}

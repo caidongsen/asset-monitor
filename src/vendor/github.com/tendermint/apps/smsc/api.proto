@@ -1,0 +1,328 @@
+syntax = "proto3";
+package smsc;
+
+//管理员
+message Admin {
+	bytes  pubkey = 1; //公钥
+}
+
+//计划员
+message Planner {
+	int64 id = 1; //计划员ID
+	string account = 2; //计划员账号
+	string name = 3; //计划员名称
+	repeated int64 supplier = 4; //管理供应商
+	bytes  pubkey = 5; //公钥
+}
+
+//供应商
+message Supplier {
+	int64 id = 1; //供应商ID
+	string account = 2; //供应商账号
+	string name = 3; //供应商名称
+	int64 planner = 4; //所属计划员
+	bytes  pubkey = 5; //公钥
+}
+
+//承运商
+message Carrier {
+	int64 id = 1; //承运商ID
+	string account = 2; //承运商账号
+	string name = 3; //承运商名称
+	bytes  pubkey = 4; //公钥
+}
+
+//收货员
+message Checker {
+	int64 id = 1; //收货员ID
+	string account = 2; //收货员账号
+	string name = 3; //收货员名称
+	bytes  pubkey = 4; //公钥
+}
+
+//订单
+message Order {
+	string id = 1; //订单编号
+	string partId = 2; //零件号
+	string boxId = 3; //箱号
+	int64 partNum = 4; //箱中零件数量
+	string info = 5; //订单信息
+	string carId = 6; //车牌号码
+	string requiredDate = 7; //订单需求日期
+	string deliveryDate = 8; //发货日期
+	string carryDate = 9; //承运日期
+	string checkDate = 10; //点货日期
+	int64 planner = 11; //计划员
+	int64 supplier = 12; //供应商
+	int64 carrier = 13; //承运商
+	int64 checker = 14; //点货员
+	OrderState state = 15; //状态
+}
+
+enum OrderState {
+	OSUndefined = 0;
+	OSTodelivered = 1; //待发货
+	OSToCarried = 2; //已发货，待运输
+	OSCarrying = 3; //运输中
+	OSChecked = 4; //已点货
+	OSRefused = 5; //拒收
+}
+
+enum Role {
+	RUndefined = 0;
+	RPlanner = 1;
+	RSupplier = 2;
+	RCarrier = 3;
+	RChecker = 4;
+}
+
+enum MessageType {
+    MsgError = 0;
+	MsgSetAdmin = 1; //设置管理员公钥
+	MsgCreateAccount = 2; //创建用户
+	MsgEditAccount = 3; //编辑用户
+	MsgDeleteAccount = 4; //删除用户
+	MsgSetSupplier = 5; //增加或删除供应商
+	MsgCreateOrder = 6; //订单发布
+	MsgDelivery = 7; //发货
+	MsgCarry = 8; //承运
+	MsgCheck = 9; //点货
+	MsgCount = 10;
+}
+
+message Request {
+	oneof value{
+		RequestSetAdmin setAdmin = 1;
+		RequestCreateAccount createAccount = 2;
+		RequestEditAccount editAccount = 3;
+		RequestDeleteAccount deleteAccount = 4;
+		RequestSetSupplier setSupplier = 5;
+		RequestCreateOrder createOrder = 6;
+		RequestDelivery delivery = 7;
+		RequestCarry carry = 8;
+		RequestCheck check = 9;
+	}
+	int64 uid = 10;
+	int64 instructionId = 11;
+	bytes pubkey = 12;
+	bytes sign = 13;
+    MessageType actionId = 14;
+}
+
+message RequestSetAdmin {
+	bytes pubkey = 1; //管理员公钥
+}
+
+message RequestCreateAccount {
+	int64 id  = 1; //用户id
+	bytes  pubkey = 2; //用户公钥
+	string  account = 3;   //账号
+	string name = 4; //名称
+	Role role = 5; //角色
+}
+
+message RequestEditAccount {
+	int64 id  = 1; //用户id
+	bytes  pubkey = 2; //用户公钥
+	string  account = 3;   //账号
+	string name = 4; //名称
+	Role role = 5; //角色
+}
+
+message RequestDeleteAccount {
+	repeated int64 id = 1; //用户id
+	repeated Role role = 2; //用户角色
+	repeated string account = 3; //用户账号
+	repeated string name = 4; //用户名称
+}
+
+enum Operate {
+	OUndefined = 0;
+	OAdd = 1; //增加供应商
+	ODel = 2; //删除供应商
+	ORefuse = 3; //拒收
+	OPass = 4; //确认点货
+}
+
+message RequestSetSupplier {
+	int64 plannerId = 1; //计划员id
+	repeated int64 supplierIdAdd = 2; //增加的供应商id
+	repeated int64 supplierIdDel = 3; //删除的供应商id
+	repeated string supplierAccountAdd = 4; //增加的供应商账号
+	repeated string supplierAccountDel = 5; //删除的供应商账号
+	repeated string supplierNameAdd = 6; //增加的供应商名称
+	repeated string supplierNameDel = 7; //删除的供应商名称
+}
+
+message RequestCreateOrder {
+	string orderId = 1; //订单id
+	int64 supplier = 2; //供应商
+	string partId = 3; //零件号
+	string boxId = 4; //箱号
+	int64 partNum = 5; //箱中零件数量
+	string requiredDate = 6; //订单需求日期
+	string plannerAccount = 7; //计划员账号
+	string plannerName = 8; //计划员名称
+	string supplierAccount = 9; //供货商账号
+	string supplierName = 10; //供货商名称
+}
+
+message RequestDelivery {
+	string orderId = 1; //订单id
+	int64 carrier = 2; //承运商
+	string partId = 3; //零件号
+	string boxId = 4; //箱号
+	int64 partNum = 5; //箱中零件数量
+	string deliveryDate = 6; //订单发货日期
+	string supplierAccount = 7; //供货商账号
+	string supplierName = 8; //供货商名称
+	string carrierAccount = 9; //承运商账号
+	string carrierName = 10; //承运商名称
+}
+
+message RequestCarry {
+	string orderId = 1; //订单id
+	string boxId = 2; //箱号
+	string carId = 3; //车牌号码
+	string carryDate = 4; //承运日期
+	string carrierAccount = 5; //承运商账号
+	string carrierName = 6; //承运商名称
+	int64 boxNum = 7; //箱数
+}
+
+message RequestCheck {
+	string orderId = 1; //订单id
+	Operate op = 2; //确认点货或拒收
+	string checkDate = 3; //点货日期
+	string checkerAccount = 4; //点货员账号
+	string checkerName = 5; //点货员名称
+	string partId = 6; //零件号
+	string boxId = 7; //箱号
+	int64 boxNum = 8; //箱数
+	string carId = 9; //车牌号码
+}
+
+message Response {
+	oneof value{
+		ResponseSetAdmin setAdmin = 1;
+		ResponseCreateAccount createAccount = 2;
+		ResponseEditAccount editAccount = 3;
+		ResponseDeleteAccount deleteAccount = 4;
+		ResponseSetSupplier setSupplier = 5;
+		ResponseCreateOrder createOrder = 6;
+		ResponseDelivery delivery = 7;
+		ResponseCarry carry = 8;
+		ResponseCheck check = 9;
+		ResponseOK ok = 10;
+		ResponseException exception = 11;
+	}
+}
+
+message ResponseException{
+	string error = 1;
+}
+
+message ResponseOK {
+	bool ok = 1;
+}
+
+message Receipt {
+    bool  isOk = 1;
+    bytes err = 2;
+}
+
+message ResponseSetAdmin {
+   int64 instructionId = 1;
+   Event event = 2;
+}
+
+message ResponseCreateAccount {
+   int64 instructionId = 1;
+   Event event = 2;
+}
+
+message ResponseEditAccount {
+   int64 instructionId = 1;
+   Event event = 2;
+}
+
+message ResponseDeleteAccount {
+   int64 instructionId = 1;
+   Event event = 2;
+}
+
+message ResponseSetSupplier {
+   int64 instructionId = 1;
+   Event event = 2;
+}
+
+message ResponseCreateOrder {
+   int64 instructionId = 1;
+   Event event = 2;
+}
+
+message ResponseDelivery {
+   int64 instructionId = 1;
+   Event event = 2;
+}
+
+message ResponseCarry {
+   int64 instructionId = 1;
+   Event event = 2;
+}
+
+message ResponseCheck {
+	int64 instructionId = 1;
+	Event event = 2;
+}
+
+message Event {
+	oneof value{
+		EventSetAdmin setAdmin = 1;
+        EventCreateAccount createAccount = 2;
+        EventEditAccount editAccount = 3;
+		EventDeleteAccount deleteAccount = 4;
+		EventSetSupplier setSupplier = 5;
+		EventCreateOrder createOrder = 6;
+		EventDelivery delivery = 7;
+		EventCarry carry = 8;
+		EventCheck check = 9;
+	}
+}
+
+message EventSetAdmin {
+	bytes pubkey = 1;
+}
+
+message EventCreateAccount {
+	int64 id = 1;
+}
+
+message EventEditAccount {
+	bytes newPubkey = 1;
+}
+
+message EventDeleteAccount {
+	repeated int64 id = 1;
+}
+
+message EventSetSupplier {
+	repeated int64 supplierIdAdd = 1;
+	repeated int64 supplierIdDel = 2;
+}
+
+message EventCreateOrder {
+	string id = 1; //订单id
+}
+
+message EventDelivery {
+	int64 carrier = 1; //承运商ID
+}
+
+message EventCarry {
+	string carId = 1; //车牌号码
+}
+
+message EventCheck {
+	string orderId = 1; //订单id
+}

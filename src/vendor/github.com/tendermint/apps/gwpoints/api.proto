@@ -1,0 +1,264 @@
+syntax = "proto3";
+package gwpoints;
+
+//用户在国网商城的订单信息
+message Order {
+	string id = 1;
+	string name = 2;
+	int32 num = 3;
+}
+
+message User {
+	bytes  pubkey = 1; //用户和一个公钥绑定
+	int64 gwPoints = 2; //国网积分余额
+	bytes  info = 3;   //用户的其他信息
+	repeated Order orders = 4; //用户在国网商城的订单记录
+}
+
+//加盟公司在平台的信息
+message CompanyStatistics {
+	int64 id = 1; //公司标识id
+	int32 companyNum = 2; //公司companyNum个积分兑换gwNum个国网积分
+	int32 gwNum = 3; //公司companyNum个积分兑换gwNum个国网积分
+	int64 companyPoints = 4; //国网商城在该商户里的积分池账户
+	int64 in = 5; //平台自行设立、管理的商户专用收款地址
+	int64 out = 6; //平台自行设立、管理的商户专用付款地址
+	int64 gwPoints = 7; //商城指定的核销地址
+	bytes info = 8; //公司其他信息
+}
+
+message Platform {
+	bytes  pubkey = 1; //平台和一个公钥绑定
+	repeated CompanyStatistics companyStatistics = 2; //合作公司积分兑入兑出统计信息
+	bytes  info = 3;   //平台的其他信息
+}
+
+enum MessageType {
+    MsgError = 0;
+	MsgInitPlatform = 1; //初始化平台，设置平台后台管理公钥
+	MsgUserCreate = 2; //创建用户
+	MsgChangePubkey = 3; //用户修改密码后更新公钥
+	MsgDistributeGwpoints = 4; //向用户发放国网积分
+	MsgSetCompanyExchangeRate = 5; //设置公司积分兑换国网积分比率
+	MsgBuyGwpoints = 6; //用户兑入国网积分
+	MsgSellGwPoints = 7; //用户兑出国网积分
+	MsgBuyGoods = 8; //用户用国网积分在国网商城购买物品
+	MsgClear = 9; //清零
+	MsgSyncPoints = 10; //同步用户的国网积分
+	MsgCount = 11;
+}
+
+message Request {
+	oneof value{
+		RequestInitPlatform initPlatform = 1;
+		RequestUserCreate userCreate = 2; //创建用户
+		RequestChangePubkey changePubkey = 3; //用户公钥改变
+		RequestDistributeGwpoints distributeGwpoints = 4;
+		RequestSetCompanyExchangeRate setCompanyExchangeRate = 5;
+		RequestBuyGwpoints buyGwpoints = 6;
+		RequestSellGwPoints sellGwPoints = 7;
+		RequestBuyGoods buyGoods = 8;
+		RequestClear clear = 9;
+		RequestSyncPoints syncPoints = 10;
+	}
+	int64 uid = 11;
+	int64 instructionId = 12;
+	bytes pubkey = 13;
+	bytes sign = 14;
+    MessageType actionId = 15;
+}
+
+message RequestInitPlatform {
+	bytes pubkey = 1; //平台管理后台公钥
+	bytes info = 2; //平台其它信息
+}
+
+message RequestUserCreate {
+	int64 userUid  = 1; //用户在系统中的唯一标识符
+	bytes  userPubkey = 2; //用户和一个公钥绑定
+	bytes  info = 3;   //用户的其他信息
+}
+
+message RequestChangePubkey {
+	bytes newPubkey = 1; //新公钥
+}
+
+message RequestDistributeGwpoints {
+	int64 userUid = 1; //用户唯一标识符
+	bytes userPubkey = 2; //用户公钥
+	int64 gwPoints = 3; //发放的国网积分数量
+}
+
+message RequestSetCompanyExchangeRate {
+	int64 id = 1; //公司唯一标识
+	int32 companyNum = 2; //公司companyNum个积分兑换gwNum个国网积分
+	int32 gwNum = 3; //公司companyNum个积分兑换gwNum个国网积分
+	bytes info = 4; //公司其他信息
+}
+
+message RequestBuyGwpoints {
+	int64 companyId = 1; //用于购买国网积分的公司积分公司id
+	int64 companyPoints = 2; //兑入用掉的公司积分数量
+}
+
+message RequestSellGwPoints {
+	int64 companyId = 1; //公司积分公司id
+	int64 companyPoints = 2; //要兑出的公司积分数量
+}
+
+message RequestBuyGoods {
+	int64 gwPoints = 1; //花费的国网积分数量
+	string orderId = 2;	//订单id
+	string productName = 3;	//商品名称
+	int32 productNum = 4; //商品数量
+}
+
+message RequestClear {
+	int64 companyId = 1;
+}
+
+message RequestSyncPoints {
+	int64 userUid = 1; //用户唯一标识符
+	bytes userPubkey = 2; //用户公钥
+	int64 gwPoints = 3; //同步时用户账户增加的国网积分数量
+	int32 added = 4; //1:增加积分，2:减少积分
+}
+
+message Response {
+	oneof value{
+		ResponseInitPlatform initPlatform = 1;
+		ResponseUserCreate userCreate = 2;
+		ResponseChangePubkey changePubkey = 3;
+		ResponseDistributeGwpoints distributeGwpoints = 4;
+		ResponseSetCompanyExchangeRate setCompanyExchangeRate = 5;
+		ResponseBuyGwpoints buyGwpoints = 6;
+		ResponseSellGwPoints sellGwPoints = 7;
+		ResponseBuyGoods buyGoods = 8;
+		ResponseClear clear = 9;
+		ResponseSyncPoints syncPoints = 10;
+		ResponseOK ok = 11;
+		ResponseException exception = 12;
+	}
+}
+
+message ResponseException{
+	string error = 1;
+}
+
+message ResponseOK {
+	bool ok = 1;
+}
+
+message Receipt {
+    bool  isOk = 1;
+    bytes err = 2;
+}
+
+message ResponseInitPlatform {
+   int64 instructionId = 1;
+   Event event = 2;
+}
+
+message ResponseUserCreate {
+   int64 instructionId = 1;
+   Event event = 2;
+}
+
+message ResponseChangePubkey {
+   int64 instructionId = 1;
+   Event event = 2;
+}
+
+message ResponseDistributeGwpoints {
+   int64 instructionId = 1;
+   Event event = 2;
+}
+
+message ResponseSetCompanyExchangeRate {
+   int64 instructionId = 1;
+   Event event = 2;
+}
+
+message ResponseBuyGwpoints {
+   int64 instructionId = 1;
+   Event event = 2;
+}
+
+message ResponseSellGwPoints {
+   int64 instructionId = 1;
+   Event event = 2;
+}
+
+message ResponseBuyGoods {
+   int64 instructionId = 1;
+   Event event = 2;
+}
+
+message ResponseClear {
+	int64 instructionId = 1;
+	Event event = 2;
+}
+
+message ResponseSyncPoints {
+	int64 instructionId = 1;
+    Event event = 2;
+}
+
+message Event {
+	oneof value{
+		EventInitPlatform initPlatform = 1;
+        EventUserCreate userCreate = 2;
+        EventChangePubkey changePubkey = 3;
+		EventDistributeGwpoints distributeGwpoints = 4;
+		EventSetCompanyExchangeRate setCompanyExchangeRate = 5;
+		EventBuyGwpoints buyGwpoints = 6;
+		EventSellGwPoints sellGwPoints = 7;
+		EventBuyGoods buyGoods = 8;
+		EventClear clear = 9;
+		EventSyncPoints syncPoints = 10;
+	}
+}
+
+message EventInitPlatform {
+	bytes pubkey = 1;
+}
+
+message EventUserCreate {
+	int64 userUid = 1;
+}
+
+message EventChangePubkey {
+	bytes newPubkey = 1;
+}
+
+message EventDistributeGwpoints {
+	int64 gwPoints = 1;
+}
+
+message EventSetCompanyExchangeRate {
+	int32 companyNum = 1;
+	int32 gwNum = 2;
+}
+
+message EventBuyGwpoints {
+	int64 points = 1; //买到的国网积分数量
+}
+
+message EventSellGwPoints {
+	int64 points = 1; //花掉的国网积分数量
+}
+
+message EventBuyGoods {
+	int64 points = 1; //花掉的国网积分数量
+}
+
+message EventClear {
+	int64 companyPoints = 1; //清零国网商城在该商户里的积分池账户
+	int64 in = 2; //清零平台自行设立、管理的商户专用收款地址
+	int64 out = 3; //清零平台自行设立、管理的商户专用付款地址
+	int64 gwPoints = 4; //清零商城指定的核销地址
+}
+
+message EventSyncPoints {
+	int64 gwPoints = 1;
+}

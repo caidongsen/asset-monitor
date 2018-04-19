@@ -1,0 +1,246 @@
+syntax = "proto3";
+package contract;
+
+enum MessageType {
+    MsgError = 0;
+	MsgInit = 1;
+	MsgShutDown = 2;
+	MsgClose = 3;
+	MsgUserCreate = 4;
+	MsgChangePubkey = 5;
+	MsgCreateContract = 6;
+	MsgLaunchSign = 7;
+	MsgCreatorSign = 8;
+	MsgEditContract = 9;
+	MsgRejectContract = 10;
+	MsgAcceptContract = 11;
+	MsgRepairContract = 12;
+	MsgDisuseContract = 13;
+	MsgCount = 14;
+}
+
+message Request {
+	oneof value{
+		RequestUserCreate userCreate = 1; //创建用户
+		RequestChangePubkey changePubkey = 2; //用户公钥改变
+		RequestCreateContract createContract = 3; //创建合同
+		RequestLaunchSign launchSign = 4; //发起签署
+		RequestCreatorSign creatorSign = 5; //发起者签署
+		RequestEditContract editContract = 6; //发起方修改合同
+		RequestRejectContract rejectContract = 7; //拒绝签署
+		RequestAcceptContract acceptContract = 8; //同意签署
+		RequestRepairContract repairContract = 9; //有签署方拒绝签署后发起方修改合同
+		RequestDisuseContract disuseContract = 10; //发起方作废合同
+	}
+	string uid = 11;
+	int64 instructionId = 12;
+	bytes pubkey = 13;
+	bytes sign = 14;
+    MessageType actionId = 15;
+	int64 opT = 16; //发起请求时的时间
+}
+
+enum ContractState {
+	CSUndefined = 0;
+	CSCreated = 1;
+	CSLaunched = 2;
+	CSEdited = 3;
+	CSRepaired = 4;
+	CSRejected = 5;
+	CSEffective = 6;
+	CSDisuse = 7;
+}
+
+message RequestUserCreate {
+	string uid  = 1; //用户在系统中的唯一标识符
+	bytes  pubkey = 2; //用户和一个公钥绑定
+	bytes  info = 3;   //用户的其他信息
+}
+
+message RequestChangePubkey {
+	bytes newPubkey = 1; //新公钥
+}
+
+message RequestCreateContract {
+	string id = 1; //合同id
+	bytes info = 2; //合同其它信息
+}
+
+message RequestLaunchSign {
+	string contractId = 1;
+	int64 endT = 2; //签署截止时间
+	repeated string signers = 3; //签署方
+}
+
+message RequestCreatorSign {
+	string contractId = 1;
+}
+
+message RequestEditContract {
+	string contractId = 1;
+	bytes info = 2; //修改后的合同其它信息
+}
+
+message RequestRejectContract {
+	string contractId = 1;
+}
+
+message RequestAcceptContract {
+	string contractId = 1;
+}
+
+message RequestRepairContract {
+	string contractId = 1;
+	bytes info = 2; //发起方修改后的合同其它信息，覆盖之前的info。
+	int64 endT = 3; //合同签署截止时间
+}
+
+message RequestDisuseContract {
+	string contractId = 1;
+}
+
+message Response {
+	oneof value{
+		ResponseUserCreate userCreate = 1;
+		ResponseChangePubkey changePubkey = 2;
+		ResponseCreateContract createContract = 3;
+		ResponseLaunchSign launchSign = 4;
+		ResponseCreatorSign creatorSign = 5;
+		ResponseEditContract editContract = 6;
+		ResponseRejectContract rejectContract = 7;
+		ResponseAcceptContract acceptContract = 8;
+		ResponseRepairContract repairContract = 9;
+		ResponseDisuseContract disuseContract = 10;
+		ResponseOK ok = 11;
+		ResponseException exception = 12;
+	}
+}
+
+message ResponseException{
+	string error = 1;
+}
+
+message ResponseOK {
+	bool ok = 1;
+}
+
+message Receipt {
+    bool  isOk = 1;
+    bytes err = 2;
+}
+
+message ResponseUserCreate {
+   int64 instructionId = 1;
+   Event event = 2;
+}
+
+message ResponseChangePubkey {
+   int64 instructionId = 1;
+   Event event = 2;
+}
+
+message ResponseCreateContract {
+	int64 instructionId = 1;
+	Event event = 2;
+}
+
+message ResponseLaunchSign {
+	int64 instructionId = 1;
+	Event event = 2;
+}
+
+message ResponseCreatorSign {
+	int64 instructionId = 1;
+}
+
+message ResponseEditContract {
+	int64 instructionId = 1;
+}
+
+message ResponseRejectContract {
+	int64 instructionId = 1;
+	Event event = 2;
+}
+
+message ResponseAcceptContract {
+	int64 instructionId = 1;
+	Event event = 2;
+}
+
+message ResponseRepairContract {
+	int64 instructionId = 1;
+	Event event = 2;
+}
+
+message ResponseDisuseContract {
+	int64 instructionId = 1;
+	Event event = 2;
+}
+
+message User {
+	bytes  pubkey = 1; //用户和一个公钥绑定
+	bytes  info = 2;   //用户的其他信息
+}
+
+message Signer {
+	string uid = 1;
+	bool signed = 2;
+}
+
+message Contract {
+	int64  endT =  1;    //签署结束时间
+	bytes  info = 2;    //合同的其他信息
+	ContractState state = 3;
+	string creatorUid = 4; //合同创建者uid
+	repeated Signer signers = 5; //合同签署者
+	int64 creatorSignT = 6; //合同发起者签署时间
+	repeated bytes historyInfos = 7;
+	repeated string rejectors = 8; //拒绝签署者
+}
+
+message Event {
+	oneof value{
+        EventUserCreate userCreate = 1;
+        EventChangePubkey changePubkey = 2;
+		EventCreateContract createContract = 3;
+		EventLaunchSign launchSign = 4;
+		EventRejectContract rejectContract = 5;
+		EventAcceptContract acceptContract = 6;
+		EventRepairContract repairContract = 7;
+		EventDisuseContract disuseContract = 8;
+	}
+}
+
+message EventUserCreate {
+	string uid = 1;
+}
+
+message EventChangePubkey {
+	bytes newPubkey = 1;
+	string uid = 2;
+}
+
+message EventCreateContract {
+	string contractId = 1;
+	ContractState state = 2;
+}
+
+message EventLaunchSign {
+	ContractState state = 1;
+}
+
+message EventRejectContract {
+	ContractState state = 1;
+}
+
+message EventAcceptContract {
+	ContractState state = 1;
+}
+
+message EventRepairContract {
+	ContractState state = 1;
+}
+
+message EventDisuseContract {
+	ContractState state = 1;
+}

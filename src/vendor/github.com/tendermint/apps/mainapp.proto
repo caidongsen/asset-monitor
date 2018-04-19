@@ -1,0 +1,256 @@
+syntax = "proto3";
+package apps;
+
+//系统内部app 数据结构
+
+enum App {
+    Admin = 0;
+    Transfer = 1; //内部币相关
+    Receipt = 2;  //交易回报保存
+    Reg = 3;      //app 注册 id from -> 1 << 17
+    AccountManage = 4;  //账户管理
+    Last = 5;
+    Max = 255;
+    Custom = 100000;
+}
+
+enum Coin {
+    NilCoin = 0;
+    FZM = 1;
+    PAN = 1000;
+    BTY = 100000000;
+}
+
+enum Sign {
+    NilSign = 0;
+    Ed25519 = 1;
+    MaxSign = 255;
+}
+
+enum MessageType {
+    MsgNil = 0;
+    MsgTransfer = 1;
+    MsgWalletInfo = 2;
+    MsgAppConf = 3;
+    MsgReceiptCreate = 4;
+    MsgReceipt = 5;
+    MsgCreateApp = 6;
+    MsgAddSender = 7;
+    MsgDelSender = 8;
+    MsgSetAdmin = 9;
+    MsgSetAppVersion = 10;
+    MsgWeightInfo = 11;
+    MsgSetWeight = 12;
+    MsgDelWeight = 13;
+    MsgAccountInfo = 14;
+    MsgSetAccount = 15;
+}
+
+message MainTx {
+    int32 AppId = 1;
+    int32 SignType = 2;
+    bytes Sign = 3;
+    bytes Data = 4;
+}
+
+message ReadRequest {
+	oneof value{
+		RequestAppConf appConf = 1;
+        RequestWalletInfo walletinfo = 2;
+        RequestReceipt receipt = 3;
+        RequestWeightInfo weightinfo = 4;
+        RequestAccountInfo accountinfo = 5;
+	}
+    App appId = 6;
+    bytes account = 7;
+    MessageType actionId = 8;
+    repeated bytes signs = 9;
+}
+
+message WriteRequest {
+    oneof value{
+        RequestTransfer      transfer = 1;
+        RequestReceiptCreate receiptCreate = 4;
+        RequestCreateApp     createApp = 5;
+        RequestAddSender     addSender = 6;
+        RequestDelSender     delSender = 7;
+        RequestSetAdmin      setAdmin  = 8;
+        RequestSetAppVersion setAppVersion = 9;
+        RequestSetWeight     setWeight = 10;
+        RequestDelWeight     delWeight = 11;
+        RequestSetAccount    setAccount = 12;
+    }
+    int64 instructionId = 14;
+    App appId = 15;
+    bytes account = 16;
+    MessageType actionId = 17;
+    repeated bytes signs = 20;
+}
+
+message RequestCreateApp {
+    bytes admin          = 3;
+    int32 appId          = 4;
+}
+
+message RequestTransfer {
+    bytes toAddr         = 3;
+    int64 amount         = 4;
+    int32 coinId         = 5;
+}
+
+message RequestAddSender {
+    bytes sender         = 3;
+    int32 appId          = 4;
+}
+
+message RequestDelSender {
+    bytes sender        = 3;
+    int32 appId         = 4;
+}
+
+message RequestSetAdmin {
+    bytes admin         = 3;
+    int32 appId         = 4;
+}
+
+message RequestSetAppVersion {
+    int32 appId         = 3;
+    int32 appVersion    = 4;
+}
+
+message RequestSetWeight {
+    bytes subaccount     = 4;
+    int32 coinId         = 5;   // 币种
+    int32 transferWeight = 6;   // 转账权重
+    int32 queryWeight = 7;      // 查询权重
+    int32 managerWeight = 8;    // 管理权重
+}
+
+message RequestDelWeight {
+    bytes subaccount     = 3;
+    int32 coinId         = 4;   // 币种
+}
+
+message RequestSetAccount {
+    bytes account = 1;
+    int64 frozen  = 2;              // 冻结金额
+    int64 active  = 3;              // 余额
+    int32 coinId  = 4;              // 币种
+    int32 transfer  = 5;            // 转账
+}
+
+message ReceiptItem {
+    bytes txhash        = 3;
+    bytes result        = 4;
+    bool  isok          = 5; 
+}
+
+message RequestReceiptCreate {
+    int32 appId         = 3;
+    int32 appVersion    = 4;
+    repeated ReceiptItem  receipts = 5;
+}
+
+message RequestReceipt {
+    bytes txhash        = 3;
+    int32 appVersion    = 4;
+}
+
+message RequestWeightInfo {
+    bytes subaccount     = 3;
+    int32 coinId         = 4;   // 币种
+}
+
+message RequestAccountInfo {
+    bytes account  = 1;
+    int64 frozen   = 2;   // 冻结金额
+    int64 active   = 3;
+    int32 coinId   = 4;   // 币种
+    int32 transfer = 5;   // 转账
+}
+
+message RequestAppConf {
+    int32 appId = 2;
+}
+
+message RequestWalletInfo {
+    int32 coinId = 2;
+}
+
+message Account {
+    bytes account   = 1;
+    int64 frozen    = 2;              // 冻结金额
+    int64 active    = 3;              // 余额
+    int32 coinId    = 4;              // 币种
+    int32 transfer  = 5;            // 转账
+}
+
+message SubAccount {
+    bytes account        = 3;
+    bytes subaccount     = 4;
+    int32 coinId         = 5;   // 币种
+    int32 transferWeight = 6;   // 转账权重
+    int32 queryWeight    = 7;      // 查询权重
+    int32 managerWeight  = 8;    // 管理权重
+}
+
+message Response {
+	oneof value{
+		ResponseException exception = 1;
+        ResponseReceipt receipt = 2;
+		ResponseWalletInfo walletInfo = 3;
+        ResponseHash hash = 4;
+        ResponseAppConf appConf = 5;
+		ResponseWeightInfo weightInfo = 6;
+		ResponseAccountInfo accountInfo = 7;
+	}
+}
+
+message ResponseException{
+	string error = 1;
+}
+
+message ResponseHash {
+   bytes txHash = 1; 
+}
+
+//ID is logid in system
+message ResponseReceipt {
+    int32 appId         = 1;
+    int32 appVersion    = 2;
+    bytes txHash        = 3;
+    bytes result        = 4;
+    bool  isOk          = 5;
+}
+
+message ResponseWalletInfo {
+    bytes account = 1;
+    int64 frozen  = 2;
+    int64 active  = 3;
+    int32 coinId  = 4;
+}
+
+message ResponseAppConf {
+    bytes admin = 1;
+    repeated bytes senders = 2;
+    int32 appId = 3;
+    int32 appVersion = 4; 
+}
+
+message ResponseWeightInfo {
+    bytes account     = 1;
+    bytes subaccount     = 2;
+    int32 coinId         = 3;   // 币种
+    int32 transferWeight = 4;   // 转账权重
+    int32 queryWeight = 5;      // 查询权重
+    int32 managerWeight = 6;    // 管理权重
+}
+
+
+message ResponseAccountInfo {
+    bytes account  = 1;
+    int64 frozen   = 2;   // 冻结金额
+    int64 active   = 3;
+    int32 coinId   = 4;   // 币种
+    int32 transfer = 5;   // 转账
+}

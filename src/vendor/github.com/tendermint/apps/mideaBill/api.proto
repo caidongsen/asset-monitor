@@ -1,0 +1,426 @@
+syntax = "proto3";
+package mideaBill;
+
+// 票据状态
+enum BillState {
+    BillError                       = 0;  // 错误
+    BillApplyWaitSign               = 1;  // 开票待签收
+    BillCancer                      = 2;  // 作废
+    BillNormalOwn                   = 3;  // 正常持有
+    BillTransferWaitSign            = 4;  // 转让待签收
+    BillTransferOk                  = 5;  // 已拆转
+    BillFinancingWaitCheck          = 6;  // 融资待审核
+    BillFinancingOk                 = 7;  // 已拆融
+    BillPaid                        = 8;  // 已兑付
+}
+
+// 票据信息
+message MideaBill {
+    string  mideaDraftId             = 1;    // 美汇编号
+    int64   mideaDraftAmount         = 2;    // 美汇金额
+    string  issueBillDay             = 3;    // 开票日
+    string  expireDay                = 4;    // 到期日
+    string  issueBillEntName         = 5;    // 开票企业名称
+    string  issueBillEntCode         = 6;    // 开票企业代码
+    bytes   issueBillPublicKey       = 7;    // 开票企业公钥
+    string  payNum                   = 8;    // 付款单号
+    string  recvBillEntName          = 9;    // 收票企业名称
+    string  recvBillEntCode          = 10;   // 收票企业代码
+    bytes   recvBillPublicKey        = 11;   // 收票企业公钥
+    string  waitRecvBillEntName      = 12;   // 待收票企业名称
+    string  waitRecvBillEntCode      = 13;   // 待收票企业代码
+    bytes   waitRecvBillPublicKey    = 14;   // 待收票企业公钥
+    string  lastBillEntName          = 15;   // 原收票企业名称
+    string  lastBillEntCode          = 16;   // 原收票企业代码
+    bytes   lastBillPublicKey        = 17;   // 原收票企业公钥
+    string  signDay                  = 18;   // 签收日
+    string  payDay                   = 19;   // 兑付日
+    string  preMideaDraftId          = 20;   // 上一级美汇编号
+    repeated string nextMideaDraftId = 21;   // 下一级美汇编号
+    BillState   billState            = 22;   // 票据状态
+    string  createTime               = 23;   // 创建时间
+    string  updateTime               = 24;   // 更新时间
+}
+
+// 用户信息
+message UserInfo {
+    string  userName                 = 1;     // 用户名
+    bytes   userPublicKey            = 5;     // 用户公钥地址
+    repeated bytes userPublicKeyList = 6;     // 用户公钥地址list
+    string  entName                  = 7;     // 企业名称
+    string  entCode                  = 8;     // 企业代码
+    bytes   entPublicKey             = 9;     // 企业公钥地址
+    string  createTime               = 10;    // 创建时间
+    string  updateTime               = 11;    // 修改时间
+}
+
+// 企业信息
+message EntInfo {
+    string  entCode                 = 1;  // 企业代码
+    string  entName                 = 2;  // 企业名称
+    bytes   entPublicKey            = 3;  // 企业公钥地址
+    string  createTime              = 5;  // 创建时间
+    string  updateTime              = 6;  // 修改时间
+}
+
+// 消息类型
+enum MessageType {
+    MsgError                        = 0;   // 信息出错
+    MsgInitPlatform                 = 1;   // 初始化平台
+    MsgRegisterUser                 = 3;   // 注册用户
+    MsgAddUser                      = 4;   // 添加用户
+    MsgUserPwdModify                = 6;   // 用户密码修改
+    MsgUserPwdReset                 = 7;   // 用户密码重置
+    MsgEntIdentifyCheck             = 8;   // 企业认证审核
+    MsgEntInfoModify                = 9;   // 企业信息修改
+    MsgApplyBill                    = 10;  // 开票申请
+    MsgApplyBillSign                = 11;  // 开票签收
+    MsgApplyBillSignRefuse          = 12;  // 开票签收拒绝
+    MsgApplyBillSignCancle          = 13;  // 开票待签收撤回
+    MsgBillTotalTransfer            = 14;  // 整转
+    MsgBillPartTransfer             = 15;  // 转让拆分
+    MsgBillTransferSign             = 16;  // 转让签收
+    MsgBillTransferRefuse           = 17;  // 转让拒绝
+    MsgBillTransferCancle           = 18;  // 转让待签收撤回
+    MsgBillTransferForcePay         = 19;  // 转让，到期未签收兑付
+    MsgBillTotalFinancing           = 20;  // 整融
+    MsgBillPartFinancing            = 21;  // 拆融
+    MsgBillFinancingCheckOk         = 22;  // 融资审核通过
+    MsgBillFinancingCheckFail       = 23;  // 融资审核拒绝
+    MsgBillFinancingFail            = 24;  // 融资冲销
+    MsgBillPay                      = 25;  // 兑付
+}
+
+// 请求
+message Request {
+    oneof value{
+        RequestInitPlatform                 initPlatform             = 1;  // 初始化平台
+        RequestRegisterUser                 registerUser             = 3;  // 注册用户  
+        RequestAddUser                      addUser                  = 4;  // 添加用户  
+        RequestUserPwdModify                userPwdModify            = 6;  // 用户密码修改
+        RequestUserPwdReset                 userPwdReset             = 7;  // 用户密码重置
+        RequestEntIdentifyCheck             entIdentifyCheck         = 8;  // 企业认证审核
+        RequestEntInfoModify                entInfoModify            = 9;  // 企业信息修改
+        RequestApplyBill                    applyBill                = 10; // 开票申请
+        RequestApplyBillSign                applyBillSign            = 11; // 开票签收
+        RequestApplyBillSignRefuse          applyBillSignRefuse      = 12; // 开票签收拒绝
+        RequestApplyBillSignCancle          applyBillSignCancle      = 13; // 开票待签收撤回
+        RequestBillTotalTransfer            billTotalTransfer        = 14; // 整转 
+        RequestBillPartTransfer             billPartTransfer         = 15; // 转让拆分
+        RequestBillTransferSign             billTransferSign         = 16; // 转让签收
+        RequestBillTransferRefuse           billTransferRefuse       = 17; // 转让拒绝
+        RequestBillTransferCancle           billTransferCancle       = 18; // 转让待签收撤回
+        RequestBillTransferForcePay         billTransferForcePay     = 19; // 转让，到期未签收兑付
+        RequestBillTotalFinancing           billTotalFinancing       = 20; // 整融 
+        RequestBillPartFinancing            billPartFinancing        = 21; // 拆融 
+        RequestBillFinancingCheckOk         billFinancingCheckOk     = 22; // 融资审核通过
+        RequestBillFinancingCheckFail       billFinancingCheckFail   = 23; // 融资审核拒绝
+        RequestBillFinancingFail            billFinancingFail        = 24; // 融资冲销
+        RequestBillPay                      billPay                  = 25; // 兑付
+    }
+    string userName         = 26;           // 用户名
+    int64 instructionId     = 27;           // 随机数
+    bytes pubkey            = 28;           // 用户公钥
+    bytes sign              = 29;           // 签名
+    MessageType actionId    = 30;           // 消息类型
+    int64 operatorTime      = 31;           // 操作时间
+}
+
+// 初始化平台
+message RequestInitPlatform {
+    string  userName                = 1;     // 用户名
+    bytes   userPublicKey           = 2;     // 用户公钥地址
+    string  entCode                 = 3;     // 企业代码
+    string  entName                 = 4;     // 企业名称
+    string  sdkUserName             = 5;     // sdk用户名
+    bytes   sdkPublicKey            = 6;     // sdk公钥地址
+}
+
+// 注册用户
+message RequestRegisterUser {
+    string  entCode        = 1;     // 企业代码
+}
+
+// 添加用户
+message RequestAddUser {
+    string  userName                = 1;     // 用户名
+    bytes  userPublicKey            = 3;     // 用户公钥地址
+    string  operator                = 5;     // 操作员
+}
+
+// 用户密码修改
+message RequestUserPwdModify {
+    bytes  userPublicKey            = 1;    // 用户公钥地址
+}
+
+// 用户密码重置
+message RequestUserPwdReset {
+    string  userName                = 1;    // 用户名
+    bytes  userPublicKey            = 2;    // 用户公钥地址
+}
+
+// 企业认证审核
+message RequestEntIdentifyCheck {
+    string  userName       = 1;     // 用户名
+    string  entCode        = 2;     // 企业代码
+    string  entName        = 3;     // 企业名称
+}
+
+// 企业信息修改
+message RequestEntInfoModify {
+    string  entName                = 1;    // 企业名称
+}
+
+// 开票申请
+message RequestApplyBill {
+    string  mideaDraftId           = 1;    // 美汇编号
+    int64   mideaDraftAmount       = 2;    // 美汇金额
+    string  issueBillDay           = 3;    // 开票日
+    string  expireDay              = 4;    // 到期日
+    // string   issueBillEntName   = 5;    // 开票企业名称
+    // string   issueBillEntCode   = 6;    // 开票企业代码
+    string  payNum                 = 7;    // 付款单号
+    string  recvBillEntName        = 8;    // 收票企业名称
+    string  recvBillEntCode        = 9;    // 收票企业代码
+}
+
+// 开票签收
+message RequestApplyBillSign {
+    string  mideaDraftId           = 1;    // 美汇编号
+}
+
+// 开票签收拒绝
+message RequestApplyBillSignRefuse {
+    string  mideaDraftId           = 1;    // 美汇编号
+}
+
+// 开票待签收撤回
+message RequestApplyBillSignCancle {
+    string  mideaDraftId           = 1;    // 美汇编号
+}
+
+// 整转
+message RequestBillTotalTransfer {
+    string  mideaDraftId           = 1;    // 美汇编号
+    string  waitRecvBillEntCode    = 3;    // 待收票企业代码
+}
+
+// 拆转或拆融的子部分
+message SubTransferOrFinancing {
+    string  mideaDraftId            = 1;    // 美汇编号
+    int64   mideaDraftAmount        = 2;    // 美汇金额
+    string  waitRecvBillEntCode     = 4;    // 待收票企业代码
+}
+
+// 转让拆分
+message RequestBillPartTransfer {
+    string  mideaDraftId                = 1;    // 美汇编号
+    repeated SubTransferOrFinancing sub = 2 ;   // 转让拆分的子部分
+}
+
+// 转让签收
+message RequestBillTransferSign {
+    string  mideaDraftId            = 1;    // 美汇编号
+}
+
+// 转让拒绝
+message RequestBillTransferRefuse {
+    string  mideaDraftId            = 1;    // 美汇编号
+}
+
+// 转让待签收撤回
+message RequestBillTransferCancle {
+    string  mideaDraftId            = 1;    // 美汇编号
+}
+
+// 转让，到期未签收兑付
+message RequestBillTransferForcePay {
+    string  mideaDraftId            = 1;    // 美汇编号
+    string  recvBillEntCode         = 3;    // 收票企业代码
+}
+
+// 整融
+message RequestBillTotalFinancing {
+    string  mideaDraftId            = 1;    // 美汇编号
+    string  waitRecvBillEntCode     = 3;    // 待收票企业代码
+}
+
+// 拆融
+message RequestBillPartFinancing {
+    string  mideaDraftId                = 1;    // 美汇编号
+    repeated SubTransferOrFinancing sub = 2 ;   // 转让拆分的子部分
+}
+
+// 融资审核通过
+message RequestBillFinancingCheckOk {
+    string  mideaDraftId            = 1;    // 美汇编号
+}
+
+// 融资审核拒绝
+message RequestBillFinancingCheckFail {
+    string  mideaDraftId            = 1;    // 美汇编号
+}
+
+// 融资冲销
+message RequestBillFinancingFail {
+    string  mideaDraftId            = 1;    // 美汇编号
+}
+
+// 兑付
+message RequestBillPay {
+    string  mideaDraftId            = 1;    // 美汇编号
+}
+
+// 票据信息查询
+message RequestBillQuery {
+    string  mideaDraftId            = 1;    // 美汇编号
+}
+
+// 响应
+message Response {
+    oneof value{
+        ResponseInitPlatform                 initPlatform             = 1;  // 初始化平台
+        ResponseRegisterUser                 registerUser             = 3;  // 注册用户
+        ResponseAddUser                      addUser                  = 4;  // 添加用户
+        ResponseUserPwdModify                userPwdModify            = 6;  // 用户密码修改
+        ResponseUserPwdReset                 userPwdReset             = 7;  // 用户密码重置
+        ResponseEntIdentifyCheck             entIdentifyCheck         = 8;  // 企业认证审核
+        ResponseEntInfoModify                entInfoModify            = 9;  // 企业信息修改
+        ResponseApplyBill                    applyBill                = 10;  // 开票申请
+        ResponseApplyBillSign                applyBillSign            = 11;  // 开票签收
+        ResponseApplyBillSignRefuse          applyBillSignRefuse      = 12; // 开票签收拒绝
+        ResponseApplyBillSignCancle          applyBillSignCancle      = 13; // 开票待签收撤回
+        ResponseBillTotalTransfer            billTotalTransfer        = 14; // 整转
+        ResponseBillPartTransfer             billPartTransfer         = 15; // 转让拆分
+        ResponseBillTransferSign             billTransferSign         = 16; // 转让签收
+        ResponseBillTransferRefuse           billTransferRefuse       = 17; // 转让拒绝
+        ResponseBillTransferCancle           billTransferCancle       = 18; // 转让待签收拒绝
+        ResponseBillTransferForcePay         billTransferForcePay     = 19; // 转让，到期未签收兑付
+        ResponseBillTotalFinancing           billTotalFinancing       = 20; // 整融
+        ResponseBillPartFinancing            billPartFinancing        = 21; // 拆融
+        ResponseBillFinancingCheckOk         billFinancingCheckOk     = 22; // 融资审核通过
+        ResponseBillFinancingCheckFail       billFinancingCheckFail   = 23; // 融资审核拒绝
+        ResponseBillFinancingFail            billFinancingFail        = 24; // 融资冲销
+        ResponseBillPay                      billPay                  = 25; // 兑付
+    }
+}
+
+// 初始化平台
+message ResponseInitPlatform {
+    int64 instructionId    = 1;
+}
+
+// 注册用户
+message ResponseRegisterUser {
+    int64 instructionId    = 1;
+}
+
+// 添加用户
+message ResponseAddUser {
+    int64 instructionId    = 1;
+}
+
+// 用户密码修改
+message ResponseUserPwdModify {
+    int64 instructionId    = 1;
+}
+
+// 用户密码重置
+message ResponseUserPwdReset {
+    int64 instructionId    = 1;
+}
+
+// 企业认证审核
+message ResponseEntIdentifyCheck {
+    int64 instructionId    = 1;
+}
+
+// 企业信息修改
+message ResponseEntInfoModify {
+    int64 instructionId    = 1;
+}
+
+// 开票申请
+message ResponseApplyBill {
+    int64 instructionId    = 1;
+}
+
+// 开票签收
+message ResponseApplyBillSign {
+    int64 instructionId    = 1;
+}
+
+// 开票签收拒绝
+message ResponseApplyBillSignRefuse {
+    int64 instructionId    = 1;
+}
+
+// 开票待签收撤回
+message ResponseApplyBillSignCancle {
+    int64 instructionId    = 1;
+}
+
+// 整转
+message ResponseBillTotalTransfer {
+    int64 instructionId    = 1;
+}
+
+// 转让拆分
+message ResponseBillPartTransfer {
+    int64 instructionId    = 1;
+}
+
+// 转让签收
+message ResponseBillTransferSign {
+    int64 instructionId    = 1;
+}
+
+// 转让拒绝
+message ResponseBillTransferRefuse {
+    int64 instructionId    = 1;
+}
+
+// 转让待签收撤回
+message ResponseBillTransferCancle {
+    int64 instructionId    = 1;
+}
+
+// 转让，到期未签收兑付
+message ResponseBillTransferForcePay {
+    int64 instructionId    = 1;
+}
+
+// 整融
+message ResponseBillTotalFinancing {
+    int64 instructionId    = 1;
+}
+
+// 拆融
+message ResponseBillPartFinancing {
+    int64 instructionId    = 1;
+}
+
+// 融资审核通过
+message ResponseBillFinancingCheckOk {
+    int64 instructionId    = 1;
+}
+
+// 融资审核拒绝
+message ResponseBillFinancingCheckFail {
+    int64 instructionId    = 1;
+}
+
+// 融资冲销
+message ResponseBillFinancingFail {
+    int64 instructionId    = 1;
+}
+
+// 兑付
+message ResponseBillPay {
+    int64 instructionId    = 1;
+}
+
+message Receipt {
+    bool  isOk = 1;
+    bytes err  = 2;
+}

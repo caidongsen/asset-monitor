@@ -1,0 +1,573 @@
+syntax = "proto3";
+package supplychain;
+
+enum MessageType {
+    MsgError = 0;
+	MsgInit = 1;
+	MsgShutDown = 2;
+	MsgClose = 3;
+	//创建用户
+	MsgUserCreate = 4;
+	//确认客户缴费
+	MsgUserPaid = 5;
+	//更改用户公钥
+	MsgChangePubkey = 6;
+	//调整用户授信额度
+	MsgChangeCredit = 7;
+	//添加预付款待融资
+	MsgCreateLoan = 8;
+	//申请授信融资
+	MsgApplyCredit = 9;
+	//申请担保
+	MsgApplyGuarantee = 10;
+	//核心企业同意或拒绝担保
+	MsgGuaranteeFeedback = 11;
+	//平台同意或拒绝授信融资
+	MsgCreditFeedback = 12;
+	//修改授信融资申请
+	MsgEditCredit = 13;
+	//挂牌
+	MsgIssueLoan = 14;
+	//撤销借款
+	MsgCancelLoan = 15;
+	//资金方发布购买意向
+	MsgPrepareBuy = 16;
+	//资金方放款
+	MsgPay = 17;
+	//融资方确认收款
+	MsgConfirmReceive = 18;
+	//提前还款
+	MsgRepayAdvance = 19;
+	//还款
+	MsgRepay = 20;
+	//确认还款
+	MsgConfirmRepay = 21;
+	//创建平台管理员账户
+	MsgCreateAdmin = 22;
+	//平台授予核心企业担保额度
+	MsgSetGuarantee = 23;
+	//增加银行资金
+	MsgIncreaseBankRmb = 24;
+	//存款
+	MsgDeposit = 25;
+	//取款
+	MsgWithdraw = 26;
+	MsgCount = 27;
+}
+
+message Request {
+	oneof value{
+		RequestUserCreate userCreate = 1; //创建用户
+		RequestUserPaid userPaid = 2; //用户已缴费
+		RequestChangePubkey changePubkey = 3; //用户公钥改变
+		RequestChangeCredit changeCredit = 4; //调整用户授信额度
+		RequestCreateLoan createLoan = 5;
+		RequestApplyCredit applyCredit = 6;
+		RequestApplyGuarantee applyGuarantee = 7;
+		RequestGuaranteeFeedback guaranteeFeedback = 8;
+		RequestCreditFeedback creditFeedback = 9;
+		RequestEditCredit editCredit = 10;
+		RequestIssueLoan issueLoan = 11;
+		RequestCancelLoan cancelLoan = 12;
+		RequestPrepareBuy prepareBuy = 13;
+		RequestPay pay = 14;
+		RequestConfirmReceive confirmReceive = 15;
+		RequestRepayAdvance repayAdvance = 16;
+		RequestRepay repay = 17;
+		RequestConfirmRepay confirmRepay = 18;
+		RequestCreateAdmin createAdmin = 19;
+		RequestSetGuarantee setGuarantee = 20;
+		RequestIncreaseBankRmb increaseBankRmb = 21;
+		RequestDeposit deposit = 22;
+		RequestWithdraw withdraw = 23;
+	}
+	string uid = 24;
+	int64 instructionId = 25;
+	bytes pubkey = 26;
+	bytes sign = 27;
+    MessageType actionId = 28;
+}
+
+message RequestUserCreate {
+	string uid  = 1; //用户在系统中的唯一标识符
+	bytes  pubkey = 2; //用户和一个公钥绑定
+	int64 credit = 3; //初始授信额度
+	UserType type = 4;
+	bytes  info = 5;   //用户的其他信息
+}
+
+message RequestUserPaid {
+	string uid  = 1; //用户在系统中的唯一标识符
+	bytes  pubkey = 2; //用户和一个公钥绑定
+}
+
+message RequestChangePubkey {
+	bytes newPubkey = 1; //新公钥
+}
+
+message RequestChangeCredit {
+	string uid = 1; //用户uid
+	int64 credit = 2; //调整的授信额度
+}
+
+message RequestCreateLoan {
+	int64 loanId = 1;
+	int64 amount = 2; //借款金额
+	int32 rate = 3; //借款利率,百分之一的话值为100，分母为一万
+	int64 expiration = 4; //还款日期
+	bytes info = 5; //融资其它信息
+}
+
+message RequestApplyCredit {
+	int64 loanId = 1;
+}
+
+message RequestApplyGuarantee {
+	int64 loanId = 1;
+	string guaranteeUid = 2; //担保企业id
+}
+
+message RequestCreditFeedback {
+	int64 loanId = 1;
+}
+
+message RequestGuaranteeFeedback {
+	int64 loanId = 1;
+}
+
+message RequestEditCredit {
+	int64 loanId = 1;
+	bytes info = 2; //修改后的其它信息，覆盖之前的info
+}
+
+message RequestIssueLoan {
+	int64 loanId = 1;
+}
+
+message RequestCancelLoan {
+	int64 loanId = 1;
+}
+
+message RequestPrepareBuy {
+	int64 loanId = 1;      
+}
+
+message RequestPay {
+	int64 loanId = 1;
+}
+
+message RequestConfirmReceive {
+	int64 loanId = 1;
+}
+
+message RequestRepayAdvance {
+	int64 loanId = 1;
+	int64 amount = 2; //还款金额
+}
+
+message RequestRepay {
+	int64 loanId = 1;
+	int64 amount = 2; //还款金额
+}
+
+message RequestConfirmRepay {
+	int64 loanId = 1;
+}
+
+message RequestCreateAdmin {
+	bytes pubkey = 1;
+	AdminType type = 2;
+}
+
+message RequestSetGuarantee {
+	string uid = 1; //设置担保额对象uid
+	int64 guarantee = 2;//担保额
+}
+
+//增加银行资金
+message RequestIncreaseBankRmb {
+	//金额
+    int64 cash = 1;
+	//银行地址
+	bytes bank = 2;
+}
+
+//存款
+message RequestDeposit {
+    //存款金额
+    int64 cash = 1;
+	//用户uid
+	string userUid = 2;
+	//用户公钥
+	bytes userPubkey = 3;
+}
+
+//取款
+message RequestWithdraw {
+    //取款金额
+    int64 cash = 1;
+	//银行地址
+	bytes bank = 2;
+}
+
+message Response {
+	oneof value{
+		ResponseUserCreate userCreate = 1;
+		ResponseUserPaid userPaid = 2;
+		ResponseChangePubkey changePubkey = 3;
+		ResponseChangeCredit changeCredit = 4;
+		ResponseCreateLoan createLoan = 5;
+		ResponseApplyCredit applyCredit = 6;
+		ResponseApplyGuarantee applyGuarantee = 7;
+		ResponseGuaranteeFeedback guaranteeFeedback = 8;
+		ResponseCreditFeedback creditFeedback = 9;
+		ResponseEditCredit editCredit = 10;
+		ResponseIssueLoan issueLoan = 11;
+		ResponseCancelLoan cancelLoan = 12;
+		ResponsePrepareBuy prepareBuy = 13;
+		ResponsePay pay = 14;
+		ResponseConfirmReceive confirmReceive = 15;
+		ResponseRepayAdvance repayAdvance = 16;
+		ResponseRepay repay = 17;
+		ResponseConfirmRepay confirmRepay = 18;
+		ResponseCreateAdmin createAdmin = 19;
+		ResponseSetGuarantee setGuarantee = 20;
+		ResponseIncreaseBankRmb increaseBankRmb = 21;
+		ResponseDeposit deposit = 22;
+		ResponseWithdraw withdraw = 23;
+		ResponseOK ok = 24;
+		ResponseException exception = 25;
+	}
+}
+
+message ResponseException{
+	string error = 1;
+}
+
+message ResponseOK {
+	bool ok = 1;
+}
+
+message Receipt {
+    bool  isOk = 1;
+    bytes err = 2;
+}
+
+message ResponseUserCreate {
+   int64 instructionId = 1;
+   Event event = 2;
+}
+
+message ResponseUserPaid {
+	int64 instructionId = 1;
+	Event event = 2;
+}
+
+message ResponseChangePubkey {
+   int64 instructionId = 1;
+   Event event = 2;
+}
+
+message ResponseChangeCredit {
+   int64 instructionId = 1;
+   Event event = 2;
+}
+
+message ResponseCreateLoan {
+   int64 instructionId = 1;
+   Event event = 2;
+}
+
+message ResponseApplyCredit {
+   int64 instructionId = 1;
+   Event event = 2;
+}
+
+message ResponseApplyGuarantee {
+   int64 instructionId = 1;
+   Event event = 2;
+}
+
+message ResponseCreditFeedback {
+   int64 instructionId = 1;
+   Event event = 2;
+}
+
+message ResponseGuaranteeFeedback {
+   int64 instructionId = 1;
+   Event event = 2;
+}
+
+message ResponseEditCredit {
+   int64 instructionId = 1;
+   Event event = 2;
+}
+
+message ResponseIssueLoan {
+	int64 instructionId = 1;
+	Event event = 2;
+}
+
+message ResponseCancelLoan {
+	int64 instructionId = 1;
+	Event event = 2;
+}
+
+message ResponsePrepareBuy {
+	int64 instructionId = 1;
+}
+
+message ResponsePay {
+	int64 instructionId = 1;
+	Event event = 2;
+}
+
+message ResponseConfirmReceive {
+	int64 instructionId = 1;
+	Event event = 2;
+}
+
+message ResponseRepayAdvance {
+	int64 instructionId = 1;
+	Event event = 2;
+}
+
+message ResponseRepay {
+	int64 instructionId = 1;
+	Event event = 2;
+}
+
+message ResponseConfirmRepay {
+	int64 instructionId = 1;
+	Event event = 2;
+}
+
+message ResponseCreateAdmin {
+	int64 instructionId = 1;
+	Event event = 2;
+}
+
+message ResponseSetGuarantee {
+	int64 instructionId = 1;
+	Event event = 2;
+}
+
+message ResponseIncreaseBankRmb {
+	int64 instructionId = 1;
+	Event event = 2;
+}
+
+message ResponseDeposit {
+	int64 instructionId = 1;
+	Event event = 2;
+}
+
+message ResponseWithdraw {
+	int64 instructionId = 1;
+	Event event = 2;
+}
+
+enum UserType {
+  U_UNK                    = 0;
+  U_BORROWER = 1;
+  U_FUNDING = 2;
+  U_CORE = 3;
+}
+
+enum AccountState {
+	ACC_UNK = 0;
+	ACC_CREATED = 1;
+	ACC_PAID = 2;
+}
+
+enum LoanState {
+  L_UNK                    = 0;
+  L_CREATED = 1;
+  L_APPLY_CREDIT = 2;
+  L_APPLY_GUARANTEE = 3;
+  L_GUARANTEE_AGREE = 4;
+  L_ADMIN_AGREE = 5;
+  L_EDIT = 6;
+  L_ISSUE = 7;
+  L_CANCELED = 8;
+  L_PAYED = 9;
+  L_CONFIRM_RECEIVE = 10;
+  L_REPAY_ADVANCE = 11;
+  L_REPAY = 12;
+  L_CONFIRM_REPAY = 13;
+}
+
+enum LoanType {
+ LT_UNK = 0;
+ LT_GUARANTEE = 1; //担保融资
+ LT_CREDIT = 2; //授信融资
+}
+
+enum AdminType {
+	A_UNK  = 0;
+	A_NORMAL = 1;
+}
+
+message Admin {
+	AdminType adminType = 1;
+	bytes adminAddr = 2;
+}
+
+message Admins {
+	repeated Admin admins = 1;
+}
+
+message User {
+	bytes  pubkey = 1; //用户和一个公钥绑定
+	int64 credit = 2; //用户授信额度
+	int64 guarantee = 3; //用户担保额
+	UserType type = 4;
+	bytes  info = 5;   //用户的其他信息
+	repeated int64 loanIds = 6; //用户融资id集
+	repeated int64 guaranteeIds = 7; //用户担保id集
+	repeated int64 buyIds = 8; //用户投资id集
+	int64 rmb = 9; //资金余额
+	AccountState state = 10; //账户状态
+}
+
+message Loan {
+	string loanId = 1; //融资者uid
+	int64 amount = 2;
+	int32 rate = 3;
+	int64 expiration = 4;
+	LoanType type = 5;
+	string guaranteeId = 6; //担保者id
+	bytes info = 7;
+	LoanState state = 8;
+	string buyId = 9; //投资者id
+	int64 repayAmount = 10; //还款金额
+}
+
+message Bank {
+	int64 rmb = 1;
+}
+
+message Event {
+	oneof value{
+        EventUserCreate userCreate = 1;
+		EventUserPaid userPaid = 2;
+        EventChangePubkey changePubkey = 3;
+	    EventChangeCredit changeCredit = 4;
+		EventCreateLoan createLoan = 5;
+	    EventApplyCredit applyCredit = 6;
+		EventApplyGuarantee applyGuarantee = 7;
+		EventGuaranteeFeedback guaranteeFeedback = 8;
+		EventCreditFeedback creditFeedback = 9;
+		EventEditCredit editCredit = 10;
+		EventIssueLoan issueLoan = 11;
+		EventCancelLoan cancelLoan = 12;
+		EventPay pay = 13;
+		EventConfirmReceive confirmReceive = 14;
+		EventRepayAdvance repayAdvance = 15;
+		EventRepay repay = 16;
+		EventConfirmRepay confirmRepay = 17;
+		EventCreateAdmin createAdmin = 18;
+		EventSetGuarantee setGuarantee = 19;
+		EventIncreaseBankRmb increaseBankRmb = 20;
+		EventDeposit deposit = 21;
+		EventWithdraw withdraw = 22;
+	}
+}
+
+message EventUserCreate {
+	string uid = 1;
+}
+
+message EventUserPaid {
+	AccountState state = 1;
+}
+
+message EventChangePubkey {
+	bytes newPubkey = 1;
+	string uid = 2;
+}
+
+message EventChangeCredit {
+	int64 credit = 1;
+}
+
+message EventCreateLoan {
+	int64 loanId = 1;
+	LoanState state = 2;
+}
+
+message EventApplyCredit {
+	LoanState state = 1;
+}
+
+message EventApplyGuarantee {
+	LoanState state = 1;
+	string guaranteeId = 2;
+}
+
+message EventGuaranteeFeedback {
+	LoanState state = 1;
+	int64 guarantee = 2; //减少的担保额度
+}
+
+message EventCreditFeedback {
+	LoanState state = 1;
+}
+
+message EventEditCredit {
+	LoanState state = 1;
+}
+
+message EventIssueLoan {
+	LoanState state = 1;
+	int64 credit = 2; //已用的授信额度
+}
+
+message EventCancelLoan {
+	LoanState state = 1;
+}
+
+message EventPay {
+	LoanState state = 1;
+	int64 rmb = 2; //账户扣款金额
+}
+
+message EventConfirmReceive {
+	LoanState state = 1;
+	int64 rmb = 2; //账户增加金额
+}
+
+message EventRepayAdvance {
+	LoanState state = 1;
+	int64 rmb = 2; //账户扣除金额
+}
+
+message EventRepay {
+	LoanState state = 1;
+	int64 rmb = 2; //账户扣除金额
+}
+
+message EventConfirmRepay {
+	LoanState state = 1;
+	int64 rmb = 2; //账户增加金额
+}
+
+message EventCreateAdmin {
+	bytes adminPubkey = 1;
+}
+
+message EventSetGuarantee {
+	int64 guarantee = 1;
+}
+
+message EventIncreaseBankRmb {
+	int64 balance = 1;
+}
+
+message EventDeposit {
+	int64 balance = 1;
+}
+
+message EventWithdraw {
+	int64 balance = 1;
+}
