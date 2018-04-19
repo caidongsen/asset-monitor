@@ -4,12 +4,14 @@ rpc="http://0.0.0.0:8888"
 [api]
 sms="https://zc.33.cn/api2/sms/send"
 mail="https://zc.33.cn/api2/sms/mailsend"
-walletInfo="http://47.74.9.155:45656/walletinfo"
+walletInfo="http://47.75.62.253:46658/walletinfo"
 transfer="http://47.74.9.155:57979/admintoinbank"
+node="http://47.75.62.253:32770/"
+fromkey="90b289fda1fb0439158f837bbe60cc1ec99616dd0bc6335d6fd0bf3d22888e20b15a4f6c5c1163b5f80715c9bd87d5118ec4b5668cb29f148eeceec61ddeadc2"
 
 [receipts]
-sms=["17816874376"] #短信通知用户列表
-mail=["249934074@qq.com"] #邮件通知用户列表
+sms=["15958024628"] #短信通知用户列表
+mail=["1030683070@qq.com"] #邮件通知用户列表
 
 [charges]
     [charges.CNY]
