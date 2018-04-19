@@ -17,6 +17,8 @@ type Api struct {
 	Mail       string
 	WalletInfo string
 	Transfer   string
+	node       string
+	fromkey    string
 }
 
 type Receipts struct {
@@ -33,7 +35,7 @@ type CoinCharge struct {
 
 func InitConfig() *Config {
 	var conf Config
-	if _, err := toml.DecodeFile("../etc/config.toml", &conf); err != nil {
+	if _, err := toml.DecodeFile("../../etc/config.toml", &conf); err != nil {
 		panic(err)
 	}
 	return &conf

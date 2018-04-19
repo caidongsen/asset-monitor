@@ -1,8 +1,12 @@
 package main
 
 import (
-	"encoding/json"
+	//	"encoding/json"
+	"dev.33.cn/33/btrade/msq"
+	cmn "dev.33.cn/33/common"
+	rpc "dev.33.cn/33/trade_tools/jsonrpc"
 	"fmt"
+	"strconv"
 	"time"
 )
 
@@ -25,35 +29,38 @@ func NewRecharge() *Recharge {
 	return r
 }
 
-func (r *Recharge) RechargeInbank(uid string, symbol string) (*RechargeResult, error) {
-	timeStr := time.Now().Format("2006-01-02 15:04:05")
-	amount := fmt.Sprintf("%d", Conf.Charges[symbol].RechargeAmount)
-	reqUrl := Conf.Api.Transfer
-
-	//将json消息需要的信息写入结构体
-	tRechargeMessage := &RechargeMessage{}
-	tRechargeMessage.Symbol = symbol
-	tRechargeMessage.Symbol = amount
-
-	//将数据类型转换为json格式
-	tRechargeMessageBytes, err := json.Marshal(tRechargeMessage)
-	if nil != err {
-		return nil, err
-	}
-
-	//调用发送json消息的工具函数
-	body, err := HttpPostJsonReq(reqUrl, string(tRechargeMessageBytes[:]))
-	if err != nil {
-		return nil, err
-	}
-
-	//将收到的[]byte转成json格式
+func (r *Recharge) RechargeInbank(key *[64]byte, currency int32, symbol string, uid string, to *[32]byte, amount_ int, node string) (*RechargeResult, error) { // (*RechargeResult, error) {
 	tRechargeResult := &RechargeResult{}
-	err = json.Unmarshal(body, tRechargeResult)
+	timeStr := time.Now().Format("2006-01-02 15:04:05")
+	amount := strconv.Itoa(amount_)
+	req := &msq.RequestTransfer{}
+	req.InstructionId = cmn.RandInstructionId()
+	req.Amount = int64(amount_)
+	req.SymbolId = currency
+	req.ActionId = msq.MessageType_MsgTransfer
+	req.Uid = key[32:]
+	req.ToAddr = to[:]
+	data, err := msq.MarshalMessage(req)
 	if err != nil {
+		tRechargeResult.Code = "1"
+		tRechargeResult.Msg = " transfer fail"
+		return nil, err
+
+	}
+	request := &msq.WriteRequest{}
+	request.Value = &msq.WriteRequest_Transfer{req}
+	request.Sign = cmn.Signdata(key, data) //1
+	request.CreateTime = time.Now().Unix() //2
+
+	resp, err := rpc.Send(request, node)
+	if err != nil {
+		tRechargeResult.Code = "1"
+		tRechargeResult.Msg = " transfer fail"
 		return nil, err
 	}
-
+	fmt.Println("data = ", resp)
+	tRechargeResult.Code = "0"
+	tRechargeResult.Msg = "transfer success"
 	//添加读写锁
 	RWMutex.Lock()
 

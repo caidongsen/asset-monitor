@@ -4,15 +4,17 @@ import (
 	"fmt"
 	l "github.com/inconshreveable/log15"
 	//"strconv"
+	"encoding/hex"
 	"errors"
+	"log"
 	"strings"
 	"time"
-
 	//"github.com/syndtr/goleveldb/leveldb"
+	cmn "dev.33.cn/33/common"
 	"github.com/syndtr/goleveldb/leveldb/util"
 )
 
-var log_rechargejudge = l.New("module", "main/web")
+var log_rechargejudge = l.New("module", "main/rechargejudge")
 
 func rechargeJudge(uid string, coin string) error {
 
@@ -42,7 +44,7 @@ func rechargeJudge(uid string, coin string) error {
 				break
 			}
 			rechargeTimes++
-			log_rechargejudge.Info("rechargeTimes", "rechargeTimes", rechargeTimes)
+			log_rechargejudge.Info("rechargeTimes", "coin", coin, "rechargeTimes", rechargeTimes)
 			// log.Println(rechargeTimes)
 			if rechargeTimes >= Conf.Charges[coin].MaxRechargeTimes {
 				//log.Println("over max recharge times")
@@ -71,17 +73,32 @@ func recharge() {
 				RWMutex.Lock()
 				err := rechargeJudge(uid, coin)
 				if err != nil {
-					log_rechargejudge.Warn("rechargeJudge err", "err", err)
+					log_rechargejudge.Warn("rechargeJudge err", "coin", coin, "err", err)
 					// log.Println(err)
 					RWMutex.Unlock()
 					continue
 				}
 				RWMutex.Unlock()
 
-				reChargeResult, err := reChargeMsg.RechargeInbank(uid, coin) //充值
+				fromPrivKey := cmn.HexToPrivkey(Conf.Api.fromkey) //fromPrivKey
+				var toPubKey [32]byte                             //toPubKey
+				var symbolId int32                                //symbolId(int32)
+				for CoinId, CoinName := range CoinIdCharge {
+					if CoinName == coin {
+						symbolId = int32(CoinId)
+						break
+					}
+				}
+				bytes, err := hex.DecodeString(uid)
+				if err != nil {
+					panic(err)
+				}
+				copy(toPubKey[:], bytes[:])
+				//node := "http://47.75.62.253:32770/"
+				reChargeResult, err := reChargeMsg.RechargeInbank(fromPrivKey, symbolId, coin, uid, &toPubKey, Conf.Charges[coin].RechargeAmount, Conf.Api.node)
 				if err != nil {
 					log_rechargejudge.Warn("RechargeInbank err", "err", err)
-					// log.Println(err)
+					log.Println(err)
 					continue
 				}
 				if reChargeResult.Code != "0" {
@@ -90,7 +107,8 @@ func recharge() {
 					continue
 				}
 				log_rechargejudge.Info("RechargeInbank succeeded", "uid", uid, "coin", coin)
-				// log.Println("recharge succeeded")
+				log.Println("recharge succeeded")
+
 			}
 		}
 		ChRechargeOK <- true

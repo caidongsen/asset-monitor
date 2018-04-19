@@ -7,7 +7,7 @@ import (
 	"sync"
 )
 
-var Version string = "0.1"
+var Version string = "0.2"
 var log_main = l.New("module", "main")
 var Conf = InitConfig()
 var Mutex sync.Mutex
@@ -39,7 +39,6 @@ func main() {
 	server := http.Server{
 		Addr: "127.0.0.1:8080",
 	}
-
 	http.HandleFunc("/home", home)
 	http.HandleFunc("/process", process)
 	server.ListenAndServe()
